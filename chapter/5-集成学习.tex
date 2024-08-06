@@ -1,0 +1,380 @@
+\section{集成学习}
+
+\subsection{集成学习综述}
+
+在学习一个新的领域之前，必须清楚其基本思想。古语有云“三个臭皮匠，顶个诸葛亮”，关于集成学习的研究开端，是源于1989年莱斯利·维利昂特和迈克尔·肯斯提出的一个公开问题：“弱可学习性是否等价于强可学习性？”这个问题也就是说如果一个机器学习任务存在着比“随机猜测”好一些的弱学习办法，就必然存在着准确率任意高的强学习办法。所谓\textbf{集成学习}（ensemble learning）便是先产生一组\textbf{个体学习器}（individual learner），再通过某种策略将其结合起来，从而得到更好的效果解决问题。
+\subsubsection{如何得到好的集成}
+要想得到好的集成效果，个体学习器应该“\textbf{好而不同}”：个体学习器间应当有一定的准确率（比随机猜测的准确率高），且要具有\textbf{多样性}（diversity）（学习器间应有差异）。
+
+可以从\textbf{误差-分歧分解}（error-ambiguity decomposition）的角度来说明多样性是得到好的集成的关键所在：
+\setcounter{equation}{0} %新的一章，将编号公式重设为1
+\begin{equation}E=\overline{E}-\overline{A}\end{equation}
+式（1）中，E指的是集成学习的误差（ensemble error），$\overline{E}$指的是每个个体的错误取平均值（Ave.error of individuals），$\overline{A}$指的是每个个体间的差异度（Ave.ambiguity of individuals）。这个式子的含义是个体学习器准确性越高、多样性越大，集成效果越好。但是，如何取舍error与ambiguity的问题成为了设计算法的挑战。
+
+那么有没有一种数学方法能够度量集成学习中个体分类器的多样性呢？事实上，现在已经提出了很多种\textbf{多样性度量}（diversity measure）方法，如不合度量、相关系数、Q-统计量、$\text{K}$-统计量......但是遗憾的是，迄今为止都没有找到一种最合适的数学刻画得到认可。因此，如何理解和度量多样性也成为了集成学习领域的\textbf{圣杯}（holy grail）问题。
+\subsubsection{常用集成学习方法}
+1.Boosting算法家族：
+
+这是一类\textbf{序列化}集成学习算法，即个体学习器间存在强依赖关系，必须串行生成。使用同质分类器，顺序训练，后续学习器着重解决前者预测不准的样本，将多个弱学习器加权求和组合成一个强学习器，强学习器的预测结果作为最终预测结果。其流程图如图5.
+
+2.Bagging算法：
+
+这是一类\textbf{并行化}集成学习算法，即个体学习器间不存在强依赖关系、可同时生成。使用同质分类器，并行训练，最终对多个弱学习器的结果进行投票或求均值的方式作为最终预测结果。著名的\textbf{随机森林}（random forest）便是此类方法应用最多的变体。Bagging的流程图如图6.
+
+3.Stacking算法：
+
+与前两类不同的是，这是一类使用异质分类器，多个弱分类器并行训练，然后最后一层加一个神经网络对弱分类器的结果进行总结，输出一个最终预测结果的算法。但是由于深度学习的发展，此类算法已经被弃如敝履，因此不多做赘述。
+
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图5.png}
+		\caption{Boosting}
+		\label{fig:image1}
+	\end{minipage}
+	\hspace{0.05\textwidth} % 间隔
+	\begin{minipage}[b]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图6.png}
+		\caption{Bagging}
+		\label{fig:image2}
+	\end{minipage}
+\end{figure}
+
+\subsection{AdaBoost}
+\textbf{自适应增强算法}（Adaptive Boosting）是Boosting家族的最著名的代表，原理颇有点“前人栽树，后人乘凉”的味道，其采用一种\textbf{顺序、级联}的结构，后一个模型的训练永远是在前一个模型的基础上完成的。AdaBoost提高了对前一轮弱分类器分类错误样本的关注度（提高其权重），降低正确样本的权重；是对多个弱分类器进行线性组合的\textbf{加性模型}，提高分类效果好的弱学习器的权重，降低分类效果差的弱学习器的权重。其训练流程叙述如下：
+
+给定训练样本集$D=\{(x_1,y_1),(x_2,y_2),...,(x_n,y_n)$进行二分类任务：
+
+Step1：权重初始化
+
+初始化所有样本的困难度，即为每个训练样本分配一个初始权重为：
+\begin{equation}D_1=\{w_{11},w_{12},...,w_{1n}\},w_{1i}=\frac{1}{N}\end{equation}
+
+Step2：训练弱分类器
+
+对包含权重分布的样本集的训练集$D_{t}$进行训练，得到弱分类器（weak learner）：$\lambda_t(x)$.
+
+Step3：计算当前分类误差
+
+弱学习器在当前训练集上的分类误差率为：
+\begin{equation}\varepsilon_t=p(\lambda_t(x_i)\neq y_i)=\sum_{i=1}^nw_{ti}I(\lambda_t(x_i)\neq y_i)\end{equation}
+
+Step4：计算弱分类器权重
+
+根据分类误差率计算当前弱分类器的权重系数为：
+\begin{equation}\alpha_t=\frac12\ln\frac{1-\varepsilon_t}{\varepsilon_t}\end{equation}
+
+Step5：更新训练样本权重
+
+迭代训练，调整训练集的权重分布：
+\begin{equation}
+	w_{t+1,i} = \begin{cases}
+		\frac{1}{2(1-\varepsilon)}, & \text{if 当前样本被正确分类} \\
+		\frac{1}{2\varepsilon}, & \text{if 当前样本被错误分类}
+	\end{cases}
+\end{equation}
+其中，$\varepsilon$表示通过当前弱学习器产生的错误率。
+
+Step6：得到最终的强分类学习器
+\begin{equation}f(x)=\sum_{i=1}^T\alpha_t\lambda_t(x)\\\Lambda(x)=sign(f(x))\end{equation}
+
+关于AdaBoost，有以下性质要进行探讨：
+
+1.AdaBoost算法有一个奇异的现象，就是一般情况下永远不会发生过拟合，这也是它最大的优点，关于这一点的原因解释参见周志华《Boosting学习理论的探索 —— 一个跨越30年的故事》一文。
+
+2.Adaboost算法不需要弱分类器的先验知识，最后得到的强分类器的分类精度依赖于所有弱分类器。无论是应用于人造数据还是真实数据，Adaboost都能显著的提高学习精度。
+
+3.Adaboost算法不需要预先知道弱分类器的错误率上限，且最后得到的强分类器的分类精度依赖于所有弱分类器的分类精度，可以深挖分类器的能力。Adaboost可以根据弱分类器的反馈，自适应地调整假定的错误率，执行的效率高。
+
+4.关于AdaBoost算法的缺点，在训练过程中，会使得难于分类样本的权值呈指数增长，训练将会过于偏向这类困难的样本，导致其易受噪声干扰。此外，其依赖于弱分类器，而弱分类器训练的时间成本很高。
+
+\subsection{GBDT}
+\textbf{梯度提升决策树}（Gradient Boosting Decision Tree，简称GBDT），其基学习器顾名思义就是CART决策树。针对分类问题就是二叉分类树，针对回归问题就是二叉回归树。所以，我们要想了解GBDT，就先从提升树说起。
+\subsubsection{提升树（Boosting tree）}
+提升树模型是统计学习中性能最好的方法之一，其基本形式写成：
+\begin{equation}f_M(x)=\sum_{m=1}^MT(x;\Theta_m)\end{equation}
+上式中，M指树的个数，T指的是每一棵决策树，而$\Theta_m$指的是决策树的参数。在分类任务中，可以使用指数损失作为二分类任务的损失函数，而对于多分类任务，则通常使用softmax作为损失函数。我们可以将二分类任务提升树理解为\textbf{AdaBoost模型的一种特殊形式}。
+
+为什么这么说呢？其一，此时的基学习器$\lambda(x)$ 与AdaBoost中的弱学习器对应，限制为二叉分类树；其二，每个基分类器的权重均设置为1。此时经集成后的最终模型可以写为：
+\begin{equation}f(x)=T(x,\theta_1)+T(x,\theta_2)+...+T(x,\theta_m)\end{equation}
+
+由此，只要我们使用的是指数损失函数，就可以用指数损失函数来调整样本数据的权值，从而让每个基学习器学到不同的内容。
+
+接下来，我们需要探讨如何处理回归任务呢？和分类任务不同的是，这里需要用到回归树（regression tree），其形式如下：
+\begin{equation}T(x;\Theta)=\sum_{j=1}^JC_jI(x\in R_j),\text{即}f_M(x)=\sum_{m=1}^MT(x;\Theta_m)\end{equation}
+
+我们通常采用的是\textbf{前向分步算法}（forward stagewise algorithm），该算法是采用贪心的策略，逐棵逐棵树进行优化。那么此时就有一个良好的性质：首先确定初始提升树$f_0(x)=0$，然后当我们优化到第m棵树时，前m-1棵树就已经成为了\textbf{已知的值}，所以我们到第m轮次优化时只需考虑的是第m棵树中的变量。这一性质非常重要且优美，后文简称优美性质。
+
+在回归树中使用的损失函数是\textbf{平方误差损失}：
+\begin{equation}
+	\begin{aligned}
+		L(y,f(x)) &= (y - f(x))^2 \\
+		&= [y - f_{m-1}(x) - T(x, \theta_m)]^2 \\
+		&= [r - T(x, \theta_m)]^2
+	\end{aligned}
+\end{equation}
+其中，$r=y-f_{m-1}(x)$称为在第m-1步时的\textbf{残差}（即第m-1步时的真实值减去预测值）。残差也正是回归树的拟合对象，结合前向分布算法有：
+\begin{equation}
+	\begin{aligned}
+		\hat{\theta}_m &= \arg\min_{\theta_m} \sum_{i=1}^N L\left(y^{(i)}, f_{m-1}(x^{(i)}) + T(x^{(i)}, \theta_m)\right) \\
+		&= \arg\min_{\theta_m} \sum_{i=1}^N \left(r_m^{(i)} - T(x^{(i)}, \theta_m)\right)^2
+	\end{aligned}
+\end{equation}
+
+由此，我们可以概括一下回归树模型的思路：
+
+（1）使用每一个残差为每一个基学习器的训练样本，得到个体学习器；
+
+（2）采用加性模型的方式进行组合集成。模型的目标是使得总体损失在逐步下降，因此如果回归树越多，模型结果就越准。当达到实际问题所需精度时，便可停止训练。
+
+\subsubsection{GBDT模型的推导}
+针对一般决策问题，我们可以使用GBDT，其基本思路依然是应用前向分布算法的加性模型集成学习。我们要解决的问题本质是：损失函数不同，对应的凸优化问题就不一样；我们希望找到一个通用的方式，求解一般性凸优化问题，这就是GBDT要做的事。
+
+所用基学习器：回归树
+
+一般损失函数，具体未知，根据实际灵活定义，但其基本形式可以写为：$L(y,f(x))$
+
+我们的核心目标是使得：
+\begin{equation}L(y^{(i)},f_m(x^{(i)}))<L(y^{(i)},f_{m-1}(x^{(i)}))\end{equation}
+移项，得：
+\begin{equation}L(y^{(i)},f_{m-1}(x^{(i)}))-L(y^{(i)},f_m(x^{(i)}))>0\end{equation}
+在一般损失函数$L(y,f_m(x))$中，只有$f_m(x)$是未知量，其满足式（13）：
+\begin{equation}f_m(x)=f_{m-1}(x)+T(x,\theta_m)\text{,}f_{m-1}(x)\text{是已知量}.\end{equation}
+解决这个凸优化问题，采用的方式是\textbf{泰勒一阶展开}，因此，有：
+\begin{equation}
+	\begin{aligned}
+		L(y,f_m(x)) &\approx L(y,f_{m-1}(x)) + \frac{\partial L(y,f_m(x))}{\partial f_m(x)}\Bigg|_{f_m(x)=f_{m-1}(x)} \cdot (f_m(x) - f_{m-1}(x)) \\
+		&\approx L(y,f_{m-1}(x)) + \frac{\partial L(y,f_m(x))}{\partial f_m(x)}\Bigg|_{f_m(x)=f_{m-1}(x)}
+	\end{aligned}
+\end{equation}
+移项，得：
+\begin{equation}L(y,f_{m-1}(x))-L(y,f_m(x))\approx-\frac{\partial L(y,f_m(x))}{\partial f_m(x)}\Bigg|_{f_m(x)=f_{m-1}(x)}\cdot T(x,\theta_m)\end{equation}
+
+我们希望$L(y,f_{m-1}(x))–L(y,f_m(x))$能一直大于零，即让总体损失一直降低，模型精度便一直提升。
+
+当$T(x,\theta_m)\approx-\frac{\partial L(y,f_m(x))}{\partial f_m(x)}$时，才满足我们的希望。此时有残差：
+\begin{equation}r(x,y)=-\left[\frac{\partial L(y,f_m(x))}{\partial f_m(x)}\right]_{f_m(x)=f_{m-1}(x)}\end{equation}
+
+接下来，将样本点$(x_i,y_i)$代入$r(x,y)$，可以得到所有$r_{m}$的值，进而得到第m轮训练的数据集。
+
+我们将GBDT的相关步骤总结如下：
+
+Step1：初始化提升树模型，计算$f_0(x)$；
+
+Step2：对每个样本计算负梯度拟合的残差；
+
+Step3：将上一步得到的残差作为样本新的真实值，继续训练下一棵回归树；
+
+Step4：计算最优拟合值
+；
+Step5：更新提升树模型；
+
+Step6：得到最终的梯度提升树。
+
+\subsection{XGBoost}
+\textbf{极端梯度提升树}（eXtreme Gradient Boosting，简称XGBoost），是由著名学者陈天奇博士提出，基于GBDT的变形和优化的模型。相较于GBDT，XGBoost在精度、速度以及泛化能力三部分均有显著的提升。因此，在诸多数据竞赛和各种顶级解决方案中都不乏XGBoost模型的身影。
+
+在精度上，XGBoost通过将损失函数展开到二阶导数，更能逼近真实损失；
+在速度上，XGBoost采用了\textbf{加权分位数}和\textbf{稀疏感知}这两个技巧，通过缓存优化和模型分块并行提高算法速度；在泛化性能上，XGBoost对损失函数加入正则化项、加性模型中设置学习率和近似采样等方式，防止过拟合
+。
+
+在XGBoost中，使用到的基学习器是回归树（regression tree）。我们依旧使用前向分布算法，依然可以使用那个优美性质：
+\begin{equation}\hat{y}_i^{(t)}=\hat{y}_i^{(t-1)}+f_t(x_i)\end{equation}
+\subsubsection{目标损失函数的确定}
+接下来我们来写一写目标损失函数（以下简称目标函数），当每一个样本输入到我们的模型之后，都可以得到一个预测值。和真实值（ground truth）相比，我们就可以计算出它们的损失。假设有N个样本，我们将这N个样本总体的损失值累加起来，便是我们要优化的目标函数：
+\begin{equation}obj^{(t)}=\sum_{i=1}^NL(y_i,\hat{y}_i^{(t)})+\sum_{i=1}^t\Omega(f_j)\end{equation}
+式（19）中，$\sum_{i=1}^t\Omega(f_j)$ 指的是将t棵树的\textbf{复杂度}累加起来，这称为\textbf{正则项}（regularizer）.那么我们的优化目标当然是使这个目标函数取最小值，即总体损失达到最小：
+\begin{equation}(w_1^*,w_2^*,...,w_j^*)=\arg\min obj^{(t)}\end{equation}
+
+正则项的定义是：
+\begin{equation}\Omega(f_t)=\gamma T+\frac12\lambda\sum_{j=1}^Tw_j^2\end{equation}
+式（21）中的T指的是当前回归树中叶子结点的个数，$\chi,\gamma $为两个可以控制惩罚力度的超参数。值得注意的有两点，其一：如果叶子结点的数量越多，就说明当前回归树越枝繁叶茂，从而更加容易产生过拟合；其二：如果结点值较大，就代表当前这一棵回归树在所有回归树中的占比较大，也容易发生过拟合。因此，正则项的作用便是缓解过拟合，通过调节控制惩罚力度的超参数来实现。根据优美的性质，正则项可以写成：
+\begin{equation}\sum_{j=1}^t\Omega(f_j)=\sum_{j=1}^{t-1}\Omega(f_j)+\Omega(f_t)=\gamma T+\frac12\lambda\sum_{j=1}^Tw_j^2+const\end{equation}
+
+由此观之，当前待优化的正则项只和当前待优化的这棵树的叶子结点的值和其叶子结点的个数相关。
+
+因为树模型往往是\textbf{阶跃而非连续的}，通常使用梯度下降法来优化不太合适，这是因为不连续的函数无法求导，那么它的梯度也是没有意义的。我们假设误差损失为平方误差损失，然后得到一个关于w的式子：
+\begin{equation}L(y_i,\hat{y}_i)=(y_i,\hat{y}_i)^2\end{equation}
+
+按样本的顺序进行遍历，将所有的损失累加起来。然后应用\textbf{目标拆解}的思想，把总体目标拆解成了以叶子结点为单位的一个个小目标逐一击破，且每个小目标中都只有一个变量。结合之前的推导，可将目标函数作一个初步的改写：
+\begin{equation}obj^{(t)}=\gamma T+\sum_{j=1}^T\left[\sum_{i\in I_j}L(y_i,\hat{y}_i^{(t-1)}+w_j)\right]+\frac12\lambda w_j^2\end{equation}
+此时，我们面临的问题是，如何将式（24）中的$L(y_i,\hat{y}_i^{(t-1)}+w_j)$            化简成一个只含有w的式子呢？这时，就需要用到\textbf{泰勒二阶展开}来化简式子。
+
+对于 $L(y_i,\hat{y}_i^{(t-1)}+w_j)$ 而言，若将$\hat{y}_{i}^{(t-1)}+w_{j}$        看作x，    $\hat{y}_i^{(t-1)}$看作$x_{0}$，则有  $w_{j}$可以看作是$x-x_{0}$.那么我们可将其化简为：
+\begin{equation}L(y_i,\hat{y}_i^{(t-1)}+w_j)\approx L(y_i,\hat{y}_i^{(t-1)})+L^{\prime}(y_i,\hat{y}_i^{(t-1)})w_j+\frac12L^{\prime\prime}(y_i,\hat{y}_i^{(t-1)})w_j^2\end{equation}
+式（25）中，$L(y_i,\hat{y}_i^{(t-1)}) ,L^{\prime}(y_i,\hat{y}_i^{(t-1)}) ,L^{\prime\prime}(y_i,\hat{y}_i^{(t-1)})$三个部分都为常量.在做优化时，第一项对我们没有什么帮助，可以直接剔除。这里举个很简单的例子：$y=x^2, y=x^2+1$的极值点是一样的。为了方便书写，我们定义$g_i,h_i$了两种表示方法，分别表示目标泰勒展式的一阶导常量和二阶导常量，由此，可将上式变形：
+\begin{equation}L(y_i,\hat{y}_i^{(t-1)}+w_j)\approx g_iw_j+\frac12h_iw_j^2\end{equation}
+代入目标函数的初步改写式，有：
+\begin{equation}obj^{(t)}=\gamma T+\sum_{j=1}^T[w_j\sum_{i\in I_j}g_i+\frac12w_j^2(\lambda+\sum_{i\in I_j}h_i)]\end{equation}
+
+为了方便书写，我们定义$\sum_{i\in I_{j}}g_{i}\text{为}G_{i} ,\sum_{i\in I_{j}}h_{i} \text{为}H_{i}$.上式可以改写为最终版本的目标函数：
+\begin{equation}obj^{(t)}=\gamma T+\sum_{j=1}^T[w_jG_i+\frac12w_j^2(\lambda+H_i)].\end{equation}
+\subsubsection{确定树的结构（预排序算法）}
+当每层回归树的划分条件不一样时，我们得到的叶子结点所包含的样本就会不一样。因此，在不同的划分条件下得到的回归树经过5.4.1节的计算方式都能找到一个$obj^*$，而我们的目的就是在众多的$obj^*$中找到那个最小值，这个最小值所对应的回归树就是我们需要确定的树的结构，并将其用作基学习器。
+
+XGBoost模型采用的是\textbf{精确贪心算法}（Precise greedy algorithm），其核心思想可以理解为“\textbf{分步+贪心}”的模式。如果我们将一棵整体的树看作是由一个个结点分裂而来的，也就是说，每一步都对应着一个结点进行分裂。基于此，我们每一次都只用关注一个结点是怎样进行分裂的，一步一步来，这便是“分步”。这样一来就可以大大降低计算量，因为我们\textbf{无需考虑组合起来的情况，每一次都只需关注当前正在考虑的这个结点的所有可能情况}。
+
+假设决策树模型在某个结点进行了特征分裂，分裂前的损失函数写为：
+\begin{equation}obj_{before}^*=-\frac12[\frac{\left(G_{left}+G_{right}\right)^2}{H_{left}+H_{right}+\lambda}]+\gamma \end{equation}
+
+分裂后的损失函数写为：
+\begin{equation}obj_{after}^*=-\frac12[\frac{G_{left}^2}{H_{left}+\lambda}+\frac{G_{right}^2}{H_{right}+\lambda}]+2\gamma \end{equation}
+
+所以，可以计算出分裂后的信息增益为：
+\begin{equation}Gain=obj_{before}^*-obj_{after}^*=\frac12[\frac{G_{left}^2}{H_{left}+\lambda}+\frac{G_{right}^2}{H_{right}+\lambda}-\frac{\left(G_{left}+G_{right}\right)^2}{H_{left}+H_{right}+\lambda}]-\gamma \end{equation}
+
+对每一棵树都采用上式进行信息增益的计算，直到找出满足条件的回归树，这便是“贪心”的含义。总结一下，用分而治之的方法处理决策树。对于每棵树的生长，按照结点分步划分，后按照“贪心”的过程治之。那么什么时候结点不再进行分裂呢？满足下列两种情形之一的，结点不再进行分裂：
+
+$1.\max gain\leq0$
+
+2.叶子结点包含的样本个数$i\leq1$
+
+这两点的解释是，当增益太小时，说明再分裂给我们带来的提升几乎为零，于是选择停止分裂。当层级越深，这棵树往往会学得更精细，容易学到不该学的东西，增加了过拟合的风险。所以我们可以\textbf{限制层级数}、\textbf{叶子结点的个数}等措施来防止过拟合。
+
+关于XGBoost，还有很多值得思考的地方，在此就不多做赘述了。感兴趣的读者可以去看看陈天奇博士的论文，或者参见杨跞仁《XGboost原理理解》。最后，我们用一幅图总结下XGBoost如图7：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.9\textwidth]{"figures/图7.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{XGBoost算法示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+\subsection{LightGBM}
+\subsubsection{从XGBoost说开去}
+XGBoost也有很多值得优化的地方，其最显著的劣势便是占用空间内存太大，不适合处理数据量和特征量都十分多的情况。在寻找最优分裂点的算法复杂度可以估计为：
+$$\Omega=\text{特征数}\times\text{特征分裂点数量}\times\text{样本量}$$
+
+由此观之，要想对XGBoost进行优化，那么肯定是要从上式中的这三方面入手。而LightGBM（\textbf{轻量梯度提升机}，Light Gradient Boosting machine）就可以看成是XGBoost的升级加强版本，2017年经微软推出后，便成为各种数据竞赛中刷分拿奖的神兵利器。和XGBoost相比，其在大规模数据集上跑起来更加轻盈。对比以下几点：
+
+（1）模型精度：XGBoost和LightGBM相当；
+
+（2）训练速度：LightGBM远快于XGBoost；
+
+（3）内存消耗：LightGBM远小于XGBoost；
+
+（4）缺失值特征：XGBoost和LightGBM都可以自动处理特征缺失值；
+
+（5）分类特征：XGBoost不支持类别特征，需要OneHot编码预处理，LightGBM直接支持类别特征。
+
+于是，我们可以用以下公式来浅显的揭示二者之间的关系：
+\begin{equation}LightGBM=XGBoost+Histogram+GOSS+EFB\end{equation}
+\subsubsection{直方图算法（Histogarm）}
+为了减少特征分裂点的数量，更加高效的寻找最优特征分裂点，LightGBM采用直方图算法寻找最优特征分裂点。直方图算法的基本思路解释是：通过将连续的浮点特征离散成个整数，并构造宽度为的直方图，然后遍历训练数据，统计每个离散值在直方图中的累计统计量。在进行特征选择时，只需要根据直方图的离散值，遍历寻找最优的分割点，全过程如图8。
+
+其优点有：
+
+（1）占用内存更低，数据分隔的复杂度更低；
+
+（2）从8位整型存储，内存消耗为原来的$\frac{1}{8}$；
+
+（3）时间开销由原来的$O(data*\textit{feature})$显著降低为$O(k*feature)$。
+
+需注意的有：
+
+（1）使用bin替代原始数据相当于增加了正则化；
+
+（2）使用bin意味着更多细节特征被丢弃，相似的数据可能被划分到了相同的桶里；
+
+（3）bin数量选择决定了正则化的程度，bin越少惩罚越严重，欠拟合风险越高；
+
+（4）直方图除了保存划分阈值和当前bin内样本数以外，还保存了当前bin内所有样本的一阶梯度和（一阶梯度和的平方的均值等价于均方损失）；
+
+（5）阈值的选取是按照直方图从小到大遍历，使用了上面的一阶梯度和，目的是得到划分后loss最大的特征及阈值。
+
+此外，直方图算法的另一个好处在于\textbf{差加速}，一个叶子节点的直方图可由其父节点的直方图与其兄弟节点的直方图做差得到，这也可以加速特征节点分裂。通常构造直方图，需要遍历该叶子上的所有数据，但直方图做差仅需遍历直方图的k个桶。作差示意图见图9.
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图8.png}
+		\caption{直方图算法示意图}
+		\label{fig:image1}
+	\end{minipage}
+	\hspace{0.05\textwidth} % 间隔
+	\begin{minipage}[b]{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图9.png}
+		\caption{作差图}
+		\label{fig:image2}
+	\end{minipage}
+\end{figure}
+\subsubsection{单边梯度抽样算法（GOSS）}
+从减少样本的角度，GOSS算法也算是LightGBM模型的核心算法。其本质很简单，就是将训练过程中大部分权重较小的样本剔除，仅对剩余样本数据计算信息增益，以达到最大效率的保留对计算信息增益有帮助的样本，提高模型训练速度的目的。
+
+GOSS的基本做法是先将需要进行分裂的特征按绝对值大小降序排序，取绝对值最大的a\%前个数据，假设样本大小为n，在剩下的(1-a)\%个数据中随机选择b\%个数据，将这个数据乘以一个常数$\frac{1-a}b$（这个常数大于1，可以理解为将b\%中的数据放大），也就是使得算法\textbf{更加关注训练不够充分的样本}。最后使用这(a+b)\%的数据来计算信息增益。
+
+一言以蔽之，此法就是丢弃梯度较小的样本并保证在不损失太多精度的情况下，提升模型训练速度。
+\subsubsection{互斥特征捆绑算法（EFB）}
+从优化特征数量出发，EFB算法通过将两个互斥(两个特征不会同时为非零值)的特征捆绑在一起，合为一个特征，在不丢失特征信息的前提下，减少特征数量，从而加速模型训练。          在许多应用场景下，数据集中会有大量的稀疏特征，这些稀疏特征大部分样本都取值为0，只有少数样本取值非0。通常可以认为这些稀疏特征是互斥的，即它们几乎不会同时取非零值。利用这种特性，可以通过对某些特征的取值重新编码，将多个这样互斥的特征捆绑成为一个新的特征。有趣的是，对于类别特征，如果转换成onehot编码，则这些onehot编码后的多个特征相互之间是互斥的，从而可以被捆绑成为一个特征。因此，对于指定为类别特征的特征，LightGBM可以直接将每个类别取值和一个bin关联，从而自动地处理它们。而无需预处理成onehot编码多此一举。
+
+简言之，该算法的步骤可以概括为：
+
+Step1：将特征按照非零值的个数进行排序；
+
+Step2：计算不同特征之间的冲突比率；
+
+Step3：遍历每个特征并尝试合并特征，使冲突比率最小化。
+
+此法的直方图时间复杂度从$O(data*feature)$降到$O(data*bundle)$，由于bundle < feature，我们能够极大地加速GBDT的训练过程而且未损失精度。此外，此法能够将许多互斥的特征变为低维稠密的特征，就能够有效的避免不必要0值特征的计算。
+\subsubsection{生长策略}
+1.XGBoost采用level-wise的生长策略，好处是可以多线程优化，也方便控制模型复杂度，且不易过拟合。但缺点是不加区分的对待同一层所有叶子节点，大部分的节点分裂和增益计算不是必须的，带来了多余的计算开销。
+
+2.LightGBM则采用lead-wise的生长策略，每次从当前所有叶子中找到分裂增益最大（一般也是数据量最大）的一个叶子，然后分裂、如此循环.
+
+优点：同level-wise相比，在分裂次数相同的情况下，leaf-wise可以降低更多的误差，得到更好的精度。
+
+缺点：可能会长出比较深的决策树，产生过拟合。可采用措施：在leaf-wise上增加了一个最大深度的限制，在保证高效率的同时防止过拟合。
+
+LightGBM经常活跃在各大机器学习、数据挖掘以及大数据挑战赛中，有人评价说“LightGBM算法除了比XGBoost更准确和更省时外，还优于现有的其他Boosting算法”。这种观点虽然绝对，不符合没有免费的午餐（NFL定理），却也不失为实战的一般经验之谈。总之，一个好的参赛方案99\%会用到集成学习的思想，这是毋庸置疑的。
+\subsection{CatBoost}
+笔者个人认为CatBoost的原理要比前面讲述的Boosting算法难理解很多，且自己也没有学到位。故本节内容可能非常粗糙，仅供大家参考。
+
+Categorical + Boosting（简称CatBoost），由俄罗斯搜索引擎Yandex开发，因其能够高效处理数据中的类别特征而得名。与其他Boosting方法相比，CatBoost主要创新了两点：类别特征处理和排序提升（Ordered Boosting）。
+
+\subsubsection{处理类别特征的方法}
+对于类别特征，如果类别数目不多，可以使用one-hot编码。否则，很容易造成维度爆炸。CatBoost不提倡使用one-hot编码，它设计了一种基于预测目标统计值的方法可以将类别特征转化为数值特征，但又不是简单的统一使用标签均值代替分类特征，而是做了改进：添加\textbf{先验分布项}，用以减少噪声和低频类别型数据对于数据分布的影响。
+
+假设$\sigma=(\sigma_{1},\sigma_{2},...,\sigma_{n})$是随机排列序列，有：
+\begin{equation}X_{\sigma_p,k}=\frac{\sum_{j=1}^{p=1}[X_{\sigma_j,k}=X_{\sigma_p,k}]\cdot Y_{\sigma_j}+\alpha P}{\sum_{j=1}^{p=1}[X_{\sigma_j,k}=X_{\sigma_p,k}]+\alpha}\end{equation}
+解释下式（33）：[ ]代表指示函数，P就代表先验项。对应回归任务，计算标签的平均值作为先验值；对于二分任务，将正类的出现概率作为先验值。$\alpha$就代表优先级的权重系数，这个是为防止低频次的特征带来的影响所用的平滑操作，如果不使用这个操作的话，当对于某一个特征只有一个样本的时候，其特征编码就为1，会有过拟合的风险。
+
+这种方法称为 Ordered Target Statistics 数值编码方法，可以有效解决预测漂移的问题，见5.6.3节。
+
+\subsubsection{特征组合}
+CatBoost在构建新的分裂节点时，会采用贪心的策略考虑特征之间的组合。CatBoost将当前树的所有组合、类别型特征与数据集中的所有类别型特征相结合，并将新的类别组合型特征动态地转换为数值型特征。
+
+使用参数“max\_ctr\_complexity”控制特征组合的最大个数。
+
+\subsubsection{预测偏移}
+\textbf{预测偏移}（Prediction shift）现象，简而言之就是训练样本$X_{k}$的分布$F(X_k)|X_k$与测试样本X的分布$F(X)|X$之间所产生的偏差。这种现象存在于所有的梯度提升（Gradient Boosting）算法中，由\textbf{目标泄露}（target leakage）和\textbf{梯度偏差}引起。目标泄露是数据泄露的一种，指在训练数据中包含目标信息，但在预测时没有可用的类似数据。这会导致模型看起来很精确，但用模型做出来的决策却很不准确。
+
+假设前一轮训练得到的强学习器为$F^{t-1}(x)$，当前的损失函数为$L(y,F^{t-1}(x))$，则本轮迭代要拟合的弱学习器为$h^{t}$：
+\begin{equation}h^t=\arg\min_{h\in H}L(y,F^{t-1}(x)+h(x))\end{equation}
+进一步梯度表达为：
+\begin{equation}h^t=\arg\min_{h\in H}E(-g^t(x,y)-h(x))^2\end{equation}
+但因上式的数学期望未知，因此往往使用同样数据集来近似：
+\begin{equation}h^t=\arg\min_{h\in H}\frac1{\mathrm{n}}\sum_n^{k=1}(-g^t(X_k,y_k)-h(X_h))^2\end{equation}
+
+由这个近似表达式就能看出预测偏移产生的原因有以下三点：
+
+1.梯度$g^t(X_k,y_k)|X_k$的条件分布与测试样本$g^t(X,y)|X$的分布不同，产生偏移。即梯度的条件分布和测试数据的分布存在偏移；
+
+2.式中定义的$h^t$基础学习器与进一步梯度表达式存在偏移。即$h^t$的数据近似估计与梯度表达式之间存在偏移；
+
+3.预测偏移会影响到训练模型的泛化性能。
+
+为了解决预测偏移的问题，可以假设数据集无穷大，在每一步提升中，独立采样一个新的数据集，将现有模型应用至新训练数据上会得到无偏残差，遗憾的是，数据集一定是有限的。因此，采用基于Ordered TS的\textbf{排序提升算法}（Ordered Boosting）。此法笔者学的不太通透，所以不能在此花费笔墨了。大家可以参见石晓文《数学推导+纯Python实现机器学习算法19：CatBoost》。
+
+\subsection{Random Forest}
+\textbf{随机森林}（Random Forest，简称RF算法），是并行化集成学习算法Bagging的著名变体，其基本思想是\textbf{以弱搏强}。Bagging的核心概念在于\textbf{自主采样}（bootstrap samping）。随机森林顾名思义，随机指的是随机的从数据集中采集一部分进行模型训练，即看问题的角度不一样，以保证每颗决策树的输出相似但不一样；森林则指的是有很多个决策树作为基学习器组成了整个模型。
+
+随机森林的一般步骤是：
+
+Step1：预设模型的超参数，几个树？分几层？
+
+Step2：随机采样，训练每个决策树：
+\begin{equation}DATASET[N\times D]\Rightarrow datasubset[n\times d]\end{equation}
+其中N,n表示样本数量，满足$n<<N$；D,d表示特征数量，满足$d<<D$。
+
+Step3：输入待测样本到每个树中，再将每个树的结果整合，从而组成森林：回归问题取均值，分类问题取众数（投票法）。

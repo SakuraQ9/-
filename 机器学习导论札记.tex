@@ -1,0 +1,80 @@
+\documentclass[UTF8,12pt]{ctexart}
+
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}    % 这个包专门用来调整页边距
+\usepackage{amsmath}    % 数学包
+\usepackage{fancyhdr}   % 页眉页脚设定
+
+\usepackage{rotating}
+
+% 插入图片的包
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+% 插入表格的包
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{multirow}
+
+% 删去图注、表注的冒号
+\usepackage{caption}
+\captionsetup{labelsep=period}
+
+% 颜色包，定义颜色，会在附录中使用到
+\usepackage{xcolor}  	
+\definecolor{commentcolor}{RGB}{85,139,78}
+\definecolor{stringcolor}{RGB}{206,145,108}
+\definecolor{keywordcolor}{RGB}{34,34,250}
+\definecolor{backcolor}{RGB}{220,220,220}
+\definecolor{gray}{RGB}{128,128,128}
+
+% 链接包：这个宏包在论文中没有任何作用，单纯为了方便给我做广告
+% 让目录可以索引到正文，所以这个包不能删！
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,filecolor=blue,urlcolor=blue}
+
+% 附录插入代码
+\usepackage{listings}
+\lstset{language=python,basicstyle=\ttfamily,columns=fullflexible,frame=single,commentstyle=\color{commentcolor},keywordstyle=\bfseries\color{keywordcolor},stringstyle=\color{stringcolor},numbersep=5pt,escapeinside=@@,emptylines=1,breaklines=true}
+
+% 务必注意：图片在figures目录下
+\graphicspath{{figures/}} 
+
+\begin{document}   % 文章开始
+	
+	\title{\Huge 机器学习导论札记} % 使用 \Huge 调整标题字体大小
+	\author{杨跞仁}
+	\date{2024年7月} % 添加日期
+	\maketitle
+		\newpage % 添加新页命令
+	
+	\tableofcontents % 插入目录
+	
+	\newpage % 添加新页命令
+	
+	\pagestyle{fancy}
+	\fancyhead{}
+	\fancyfoot[R]{}
+	\fancyfoot[L]{}
+	
+	\input{chapter/1-引言.tex}
+	\newpage % 添加新页命令
+	\input{chapter/2-线性模型.tex}
+	\newpage % 添加新页命令
+	\input{chapter/3-基础聚类.tex}
+	\newpage % 添加新页命令
+	\input{chapter/4-决策树.tex}
+	\newpage % 添加新页命令
+	\input{chapter/5-集成学习.tex}
+	\newpage % 添加新页命令
+	\input{chapter/6-支持向量机.tex}
+	\newpage % 添加新页命令
+	\input{chapter/7-神经网络.tex}
+	\newpage % 添加新页命令
+	\input{chapter/8-贝叶斯分类器.tex}
+	\newpage % 添加新页命令
+
+	
+	
+\end{document}
+

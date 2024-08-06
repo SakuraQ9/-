@@ -1,0 +1,141 @@
+\section{线性模型}
+
+\subsection{线性模型原理的讲述}
+下面的流程图呈现了我对于线性模型的大致梳理过程，下面的讲述也将按照这个顺序进行。
+% 插入图片的代码
+\begin{figure}[h] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.8\textwidth]{"figures/图1.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{线性模型梳理流程图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+\subsubsection{线性模型的目的及效果}
+在学习任何模型之前，首先应当清楚其需要达到的目的（一针见血地道出是在做什么事）。而\textbf{线性模型}(linear model)就是在试图学得一个通过属性的线性组合来进行预测的函数：
+\begin{equation}
+	f(x)=w_1x_1+w_2x_2+\cdots+w_dx_d+b
+\end{equation}
+上式写成向量形式为：
+\begin{equation}
+	f(x)=w^Tx+b
+\end{equation}
+
+所以，我们需要做的便是学得参数$w,b$，来将模型确定。由此可见，线性模型的效果是：\textbf{简单}、\textbf{基本}、\textbf{可解释性好}。
+\subsubsection{线性回归}
+线性回归的本质是希望学得：
+\begin{equation}
+	f(x_i)=wx_i+b,s.t.f(x_i)\approx y_i
+\end{equation}
+若涉及离散的数据，采取的措施如下：若有“序”(order)，则连续化；否则，转化为$k$维向量。
+下面就该想想如何确定参数$w,b$，关键在于如何找到预测函数$f(x)$与真实值(ground truth)之间的差异，这一差异可以利用均方误差进行度量，令\textbf{均方误差}最小化，有：
+\begin{equation}
+	\begin{aligned}
+		(w^*, b^*)  &= \arg\min_{(w, b)} \sum_{i=1}^m (f(x_i) - y_i)^2 \\
+		            &= \underset{(w, b)}{\operatorname*{\arg\min}} \sum_{i=1}^m \left( y_i - wx_i - b \right)^2
+	\end{aligned}
+\end{equation}
+对$E_{(w,b)}=\sum_{i=1}^m(y_i-wx_i-b)^2$进行最小二乘估计，分别对$w$和$b$求偏导，并令偏导数为0, 得到闭式(closed-form)解：
+\begin{equation}
+	w=\frac{\sum_{i=1}^my_i(x_i-\overline{x})}{\sum_{i=1}^mx_i^2-\frac1m(\sum_m^{i=1}x_i)^2},b=\frac1m\sum_m^{i=1}(y_i-wx_i)
+\end{equation}
+\subsubsection{多元线性回归}
+把$w$和$b$吸收入向量形式$\hat{w}=(w,b)$的数据集表示为：
+\begin{equation}\begin{gathered}X=\begin{bmatrix}x_{11}&x_{12}&...&x_{1d}&1\\x_{21}&x_{22}&\cdots&x_{2d}&1\\\vdots&\vdots&\cdots&\vdots&1\\x_{m1}&x_{m2}&\cdots&x_{md}&1\end{bmatrix}=\begin{bmatrix}x_1^T&1\\x_2^T&1\\\vdots&\vdots\\x_m^T&1\end{bmatrix},y=(y_1,y_2,\cdots,y_n)\end{gathered}\end{equation}
+同样采用最小二乘法求解，有：
+\begin{equation}\hat{w}^*=\arg\min_{\hat{w}}(y-X\hat{w})^T(y-X\hat{w})\end{equation}
+令$E_{\hat{w}}$为式（7）中的主体目标函数，对$\hat{w}$求偏导：
+\begin{equation}\frac{\partial E_{\hat{w}}}{\partial\hat{w}}=2X^T(X\hat{w}-y)\end{equation}
+令此偏导数为0，即可得到 $\hat{w}$ 的最优解的闭式解。然而不幸的是，这样处理将会遇到一个大麻烦——\textbf{涉及矩阵求逆}：
+
+\newline % 强制换行
+（1）若 $X^{T}X$ 满秩或正定，则 $\hat{w}^{*} = (X^{T}X)^{-1}X^{T}y$
+
+\newline % 强制换行
+（2）若 $X^{T}X$ 不满秩，则可解出多个 $\hat{w}$，此时往往需求助于归纳偏好，或引入 \textbf{正则化} (regularization)。
+\newline % 强制换行
+
+线性模型看似简单，但是依然灵活多变。在线性回归中，本质是将预测值逼近真实值$y$。事实上，我们还可以令预测值逼近$y$的衍生物，这样就可以得到更多的多元线性回归模型。例如令$\ln y=w^Tx+b$，就得到了\textbf{对数线性回归}(log-linear regression)，如图2所示，这种做法其实是在用$e^{w^Tx+b}$逼近$y$。
+
+\begin{figure}[t] 
+	\centering
+	\includegraphics[width=0.5\textwidth]{"figures/图2.png"} % 调整图片宽度为页面宽度的 50%
+	\caption{对数线性回归示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+\subsubsection{广义线性回归与对率回归}
+引子：在上例对数线性回归模型中，对数函数起到的作用便是将线性模型的预测值与真实标记联系起来的作用。那么推广到更一般的情况，我们考虑单调可微函数$g(\cdot)$，得到广义线性回归的一般形式：
+\begin{equation}y=g^{-1}(w^Tx+b)\end{equation}
+式（9）中的$g^{-1}$便称作单调可微的\textbf{联系函数}(link function)，它的作用是把线性回归产生的结果与实际需要的结果联系起来。那么正是因为有联系函数作为纽带，所以回归模型能处理分类任务。而下面要讲述的\textbf{对数几率回归}(logistic odds regression)也是一种\textbf{分类学习算法}。
+
+以二分类任务为例，线性回归模型产生的实值输出为$z=w^Tx+b$，但我们的期望输出为$y\in[0,1]$。因此，我们需要找到一个替代函数，将实值转化到[0,1]区间内。我们可以找到一个理想的“\textbf{单位阶跃函数}”(unit-step function)：
+\begin{equation}y=\begin{cases}0,&z<0\\1/2,z=0\\1,z>0&\end{cases}\end{equation}
+式（10）中，若预测值$z$大于0则判定为正例，小于0则判定为负例，等于临界值0则可以任意判别。但是由于此函数不连续，性质不好，所以我们需要找到一个\textbf{连续}的常用\textbf{可微}且\textbf{任意阶可导}的替代函数，而Sigmoid(S型函数)正是具备以上优美性质的函数，如图3，
+\begin{figure}[ht] 
+	\centering
+	\includegraphics[width=0.5\textwidth]{"figures/图3.png"} % 调整图片宽度为页面宽度的 50%
+	\caption{S形曲线示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+其解析式见式（11）：
+\begin{equation}y=\frac1{1+e^{-z}}=\frac1{1+e^{-(w^Tx+b)}}\end{equation}
+这个替代函数便称作\textbf{对数几率函数}(logistic function)。简称“\textbf{对率函数}”。以对率函数为联系函数，式（11）可以化简为：
+\begin{equation}\ln\frac y{1-y}=w^Tx+b\end{equation}
+式（12）中的$\frac y{1-y}$则反映了$x$作为正例的可能性，即几率(odds)的得名由来。下面给出对数几率回归的求解思路：
+若将$y$看作类后验概率估计$p(y=1\mid x)$，则式（12）可以改写为：
+\begin{equation}\ln\frac{p(y=1\mid x)}{p(y=0\mid x)}=w^Tx+b\end{equation}
+于是，可使用“极大似然法”(maximum likelihood method)，给定数据集$\{(x_i,y_i)\}_{i=1}^m$，其最大化对数似然函数(log-likelihood function)可以写成：
+\begin{equation}l(w,b)=\sum_{i=1}^m\ln p(y_i\mid x_i;w,b)\end{equation}
+式（14）的本质是令每个样本属于其真实标记的概率越大越好，即要求：
+\begin{equation}\max\{p(\text{真实为正例)}p(\text{预测为正例 })+p(\text{真实为负例)}p(\text{预测为负例 })\}\end{equation}
+令$\beta=(w;b),\quad\hat{x}=(x;1)$,则$w^Tx+b$可以简记为$\beta^T\hat{x}$。再令：
+\begin{equation}\begin{aligned}&p_1(\hat{x}_i,\beta)=p(y=1\mid\hat{x}_i;\beta)=\frac{e^{w^Tx+b}}{1+e^{w^Tx+b}},\\&p_0(\hat{x}_i,\beta)=p(y=0\mid\hat{x}_i;\beta)=1-p(y=1\mid\hat{x}_i;\beta)=\frac1{1+e^{w^Tx+b}},\end{aligned}\end{equation}
+结合上述各式可将似然项重写为：
+\begin{equation}p(y_i\mid\hat{x}_i;w,b)=y_ip_1(\hat{x}_i,\beta)+(1-y_i)p_0(\hat{x}_i,\beta)\end{equation}
+于是，最大化对数似然函数（15）等价于最小化下式：
+\begin{equation}l(\beta)=\sum_{i=1}^m(-y_i\beta^T\hat{x}^i+\ln(1+e^{\beta^T\hat{x}^i}))\end{equation}
+
+显然，式（17）是关于的一个高阶可导连续凸函数，可用经典的数值优化方法：如梯度下降法(gradient descent method)或者牛顿法(Newton method)求得最优解。
+\subsubsection{类别不平衡学习}
+简而言之，类别不平衡 (class-imbalance)，便是指不同类别的样本比例相差很大的情况，此时“小类”往往更重要。以正例较少反例较多来举例，其基本思路是若$\frac y{1-y}>\frac{m^+}{m^-}$，（${m^+}$表示正例数目，${m^-}$表示负例数目）则预测为正例。又因为分类器是在基于进行决策的，因此我们采用“再缩放”(rescaling)的策略进行决策：分类器是在基于若$\frac y{1-y}>1$则预测为正例进行决策的，因此我们采用“再缩放”(rescaling)的策略进行决策：
+\begin{equation}\frac{y^{\prime}}{1-y^{\prime}}=\frac y{1-y}\times\frac{m^+}{m^-}\end{equation}
+
+然而，这是基于“训练集是真实样本总体的无偏采样”这个假设下才成立的，实际任务中往往不会如此理想，精确估计观测几率$\frac{m^+}{m^-}$往往很困难，因此无法使用训练集观测几率来推断出真实几率。我们在现实中常见的类别不平衡学习方法有：过采样 (oversampling)，欠采样 (undersampling)以及阈值移动(threshold-moving)。
+
+\subsection{基于线性模型的一些问题探讨}
+\subsubsection{在极大似然法中，为什么通常取自然对数？}
+因为概率通常很小，计算机很难处理非常小的小数，取自然对数可以有效防止浮点数下溢的情况。
+\subsubsection{对数几率回归有哪些优点？}
+（1）无需事先假设数据分布；
+\newline % 强制换行
+ 
+（2）可得到“类别”的近似概率预测；
+\newline % 强制换行
+
+（3）可直接应用现有数值优化算法求取最优解。
+\subsubsection{在对数几率回归中，为什么不能用最小二乘法（基于均方误差的性能度量）去处理？}
+先回顾一下最小二乘法的步骤：
+
+对于函数：$f(x)=\frac1{1+e^{-(w^Tx+b)}}$，找$[f(x)-y]^2_{\min}\Rightarrow\text{找}[\frac1{1+e^{-(w^Tx+b)}}-y]_{\min}$
+此后令偏导数为0，得到最优闭式解。
+
+不难看出，最小二乘法的最终解一定是梯度为0处的解。事实上，梯度为0处的解不一定是最优解，最小二乘法这样处理的原理是基于优化\textbf{凸函数}的前提下，梯度为0处的解才对应最优解。而在对数几率回归中，可以证明需要优化的函数（20）是非凸的，所以最小二乘法不适用。
+\begin{equation}g(x,y)=\frac1{1+e^{-(w^Tx+b)}}-y\end{equation}
+\subsubsection{最小二乘法与极大似然法有什么联系？}
+笔者将二者的关系概括如下：极大似然估计是就是确定（估计）一个模型参数是当前事件最有可能得到，当数据测量误差项服从标准正态分布时，其结果和最小二乘法一致。
+\subsubsection{极大似然估计与贝叶斯估计有什么差异？}
+在已知数据集D服从某种概率分布P，P中参数$\theta $未知。极大似然估计认为未知$\theta $是一个定值，目标是找到这个参数$\theta $使得数据集D发生的概率最大，记为$\max p(D\mid\theta)$。而贝叶斯估计则是认为未知参数$\theta $本身服从一定的概率分布，目标是找到当数据集D发生的前提下，哪一个参数$\theta $发生的概率最大，记为：$\max p(\theta\mid D)$。
+\begin{table}[h]
+	\centering
+	\begin{tabular}{ccc}
+		\toprule
+		数据集 & 参数估计方法 & 数学刻画 \\
+		\midrule
+		D & 极大似然估计 & $\hat{\theta} = \arg\max p(D \mid \theta)$ \\
+		D & 贝叶斯估计 & $\hat{p}(\theta \mid D) = \frac{p(\theta)p(D \mid \theta)}{P(D)}$ \\
+		\bottomrule
+	\end{tabular}
+	\caption{两种估计的数学刻画对比表}
+	\label{tab:estimation_methods}
+\end{table}
+
+由此，贝叶斯估计引入了未知参数$\theta $所服从的先验概率，去求得当数据集D发生前提下的后验概率。假设先验概率分布是均匀分布，然后取后验概率最大，就能从贝叶斯估计中得到极大似然估计。

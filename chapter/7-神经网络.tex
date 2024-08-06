@@ -1,0 +1,593 @@
+\section{神经网络}
+神经网络作为机器学习领域发展最快的分支，自21世纪10年代以来，得益于计算机处理能力的飞速提升和海量数据的涌现，其复杂程度不断加深，层数日益增多，形态千变万化。神经网络已演化为深度学习，其也被誉为通向人工智能领域的金钥匙。
+
+本章仅是管中窥豹，从最单纯的网络讲起，慢慢过度到深度学习，对CV和NLP领域的著名网络予以简单介绍。
+\subsection{神经元与感知机}
+现在流行的对于神经网络的公认定义是由T. Kohonen, 1988,Neural Networks给出的：“神经网络是由具有适应性的简单单元组成的广泛并行互连的网络，它的组织能够模拟生物神经系统对真实世界物体所作出的交互反应”。而神经网络是一个很大的学科领域，我们仅讨论神经网络与机器学习的交集，即“神经网络学习”亦称“\textbf{连接主义}”（connectionism）学习。
+
+上述具有适应性的简单单元也称作神经元（neuron），神经元的模型如下：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图15.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{神经元模型示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+如上图，每一个神经元都接受来自其他神经元的输入信号，输入信号通过带有权重的连接传递，得到的总输入值和阈值进行比较，通过\textbf{激活函数}（activation function）处理后进行输出。需要注意的是，\textbf{神经网络学得的知识蕴含在连接权与阈值中}。
+
+理想激活函数是阶跃函数，0表示抑制神经元，1表示激活神经元。但因为阶跃函数具有不连续、不光滑等不好的性质，如图16，常用的是Sigmoid函数（后文会提到）。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图16.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{激活函数} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+
+1957年，Frank Rosenblatt指出能够从一些输入输出对$(X,y)$中通过学习算法获得权重W和b。
+
+\textbf{感知机算法}（Perceptron Algorithm）是由两层神经元组成的神经网络，我们定义增广向量$\vec{X}=\begin{cases}\begin{bmatrix}X\\1\end{bmatrix},y=+1\\\begin{bmatrix}-X\\-1\end{bmatrix},y=-1\end{cases},\quad W=\begin{bmatrix}w\\b\end{bmatrix}$，那么感知机算法可以描述如下：
+
+输入：$\bar{X}_i$；
+
+Step1：随机取W；
+
+Step2：若$W^T\vec{X}_i<0$，则$W=W+\vec{X}_i$；
+
+Step3：一直重复Step2，直到对所有的$\bar{X}_i$都不满足增广向量$\vec{X}$时退出。
+
+\textbf{感知机收敛定理}：输入$\{\vec{X}_i\},i=1\sim N$，若线性可分，即满足：
+\setcounter{equation}{0} %新的一章，将编号公式重设为1
+\begin{equation}\exists W_{opt},s.tW_{opt}^T\vec{X}_i>0,i=1\sim N\end{equation}
+则利用上述感知机算法，经过有限步骤后，必可以得到一个W，$s.t.W^T\vec{X}_i>0,i=1\sim N$.
+
+\textbf{注意}：若存在一个超平面能够将数据分开，则必有无数个超平面能够将数据分开，因此$W_{opt}$与W仅仅有\textbf{十分微小的可能是}同一个超平面。
+
+\textbf{证明}：不失一般性，不妨设$\left\|W_{opt}\right\|=1$（因为$W_{opt}\text{与}aW_{opt}$是同一个平面）
+
+假设第k步的W是$W_{k}$，且有一个$\vec{X}_i$，使：$W_k^T\bar{X}_i<0$
+
+根据感知机算法：
+\begin{equation}\begin{aligned}&\left\|W_{k+1}-aW_{opt}\right\|^2=\left\|(W_k-aW_{opt})+\vec{X}_i\right\|^2\\&=\left\|(W_k-aW_{opt})\right\|^2+\left\|\vec{X}_i\right\|^2+2W_k^T\vec{X}_i-2aW_{opt}^T\vec{X}_i\end{aligned}\end{equation}
+式（2）中，$2W_k^T\vec{X}_i<0\text{,2}aW_{opt}^T\vec{X}_i>0$，因此一定可以取一个很大的$\alpha$，使：
+\begin{equation}\left\|W_{k+1}-aW_{opt}\right\|^2<\left\|(W_{k}-aW_{opt})\right\|^2\end{equation}
+
+这可以反映出每一次迭代，都能使新的W到平面的距离减小，完成了定性证明。那么，究竟会不会一直减小直至为零呢？答案是会的，下见定量证明：
+
+定义$\beta=\max\left\{\left\|\vec{X}_i\right\|\right\},\gamma=\min_{i=1\sim N}(W_{opt}^TX_i)$，取$a=\frac{\beta^2+1}{2\gamma}$，则：
+\begin{equation}\left\|W_{k+1}-aW_{opt}\right\|^2<\left\|(W_{k}-aW_{opt})\right\|^2-1\end{equation}
+
+取$D=\left\|(W_0-aW_{opt})\right\|$，则至多经过$D^{2}$步骤后，W将收敛至超平面$aW_{opt}$.
+
+\subsection{多层前馈神经网络}
+\subsubsection{工作原理与万有逼近性}
+多层网络，是指包含隐层的网络；前馈网络，是指神经元之间不存在同层连接也不存在跨层连接（而并不是说信号只能向前传递）。其中，隐层和输出层神经元亦称“功能单元”（Functional Unit）。多层前馈神经网络具有强大的表示能力，即\textbf{万有逼近性：仅需一个包含足够多神经元的隐层，多层前馈神经网络就能以任意精度逼近任意复杂度的连续函数}。这个将在下文展开具体的叙述。需要注意的是，如傅里叶变换，泰勒展开等都具有此性质，这并不是神经网络所独有的优良性能。神经网络训练其实是一个“糊涂”的过程：即解一定存在，只是需要自己不断的去寻找。如何设置隐层神经元数量是一个悬而未决的问题，实际常用“试错法”。
+
+我们以一个简单的两层神经网络为例，看看其是如何工作的：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.9\textwidth]{"figures/图17.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{一个非常简单的两层神经网络模型示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+如图17所示，$\varphi(.)$是一个非线性函数，第一层神经元中有：
+\begin{equation}\begin{cases}a_1=w_{11}X_1+w_{12}X_2+b_1\\a_2=w_{21}X_1+w_{22}X_2+b_2\end{cases}\end{equation}
+
+第二层神经元有：
+\begin{equation}\begin{cases}z_1=\varphi(a_1)\\z_2=\varphi(a_2)\end{cases}\end{equation}
+
+因此输出是：
+\begin{equation}y=w_1z_1+w_2z_2+b\end{equation}
+
+\textbf{注意}：必须要引进非线性函数，整个神经网络模型才会变成非线性模型，才能够去处理非线性问题！
+
+\textbf{万有逼近性定理：三层神经网络可以模拟所有决策面}。
+
+例1：在空间$x_{1}Ox_{2}$中，有一个三角形的决策面，请问如何使用神经网络模型进行模拟？
+
+此三角形决策面是由三条直线所围成的封闭图形，三条直线方程可以设置为：
+\begin{equation}\begin{cases}w_{11}X_1+w_{12}X_2+b_1&=0\\[2ex]w_{21}X_1+w_{22}X_2+b_2&=0\\[2ex]w_{31}X_1+w_{32}X_2+b_3&=0\end{cases}\end{equation}
+
+\begin{figure}[h]
+	\centering
+	\begin{minipage}[b]{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图18.png}
+		\caption{两层神经网络模拟示意图}
+		\label{fig:image1}
+	\end{minipage}
+	\hspace{0.05\textwidth} % 间隔
+	\begin{minipage}[b]{0.7\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{图19.png}
+		\caption{三层神经网络模拟示意图}
+		\label{fig:image2}
+	\end{minipage}
+\end{figure}
+
+我们可以设置如图18所示的两层神经网络，输入为$x_1,x_2$，输出为$y$。当输出为正值，就说明落在决策面中。为了保证这一点，我们可以在第二层神经网络中，将b设置为-2.5。因为第二层一共有3个神经元，该层每个神经元的输出信号$\text{( wX)}$非0即1，我们必须保证三个输出信号均取1时，输出才为正值。
+
+例2：如果将上例改为决策面为n个不同的三角形呢？
+
+只需在例1的基础上，增加n组神经元，此时神经元数目为3n。理论上每层神经元的数目可以无限大，因此该问题需要三层神经网络就可以解决。我们以$n=2$为例，建立如图19所示的模拟神经网络。
+
+例3：如果将上例改为决策面为圆形或不规则形状呢？
+
+思路很简单，就是将圆形或不规则形状近似模拟为很多个直线围成的图形，其他同例2，有多少条直线，就有多少个神经元（可以无限大）。解决该问题依然只用三层神经网络。
+
+由此，从特殊到一般，可以说明定理的正确性。
+
+\subsubsection{误差逆传播（BP算法）}
+\textbf{误差逆传播算法}（error BackPropagation ,简称 BP算法）是迄今为止最著名的神经网络算法，其原理主要基于\textbf{梯度下降法}求局部极值，并从输出层神经元依次\textbf{从后向前链式求导}。
+
+梯度下降法求局部极值的过程很好理解，想象一个置身于黑暗之中的人，想要下楼梯，他能做的就是探出自己的脚慢慢摸索，发现向下的台阶就移动。所以，这个人最终会到达一个他所能到最低点，即局部最低点，这个最低点不一定是整个函数的最低点（全局最低点）。能够得到什么样的局部最低点往往和初始下降位置有关。下面给出梯度下降法的训练过程：
+
+Step1：找一个$w_0$；
+
+Step2：设$k=0$，假设$\left.\frac{\partial f(w)}{\partial w}\right|_{w_k}=0$，退出循环；否则$w_{k+1}=w_{k}-\alpha\frac{\partial f(w)}{\partial w}\Bigg|_{w_{k}}$。
+
+其中，$\alpha$称为学习率或步长，上述更新表达式可以用在w局部的泰勒展开式来证明：
+\begin{equation}\begin{aligned}
+		&f(w+\Delta w)=f(w)+\frac{\partial f(w)}{\partial w}\Bigg|_w\cdot\Delta w+o(\Delta w) \\
+		&f(w_{k+1})=f(w_{k})+(\frac{\partial f(w)}{\partial w}\Bigg|_{w_{k}})(-\alpha\frac{\partial f(w)}{\partial w}\Bigg|_{w_{k}})+o(\Delta w) \\
+		&=f(w_k)-\alpha(\frac{\partial f(w)}{\partial w}\Bigg|_{w_k})^2+o(\Delta w) \\
+		&<f(w_{\dot{\kappa}})
+\end{aligned}\end{equation}
+
+即后一步永远比前一步小。
+
+下面以图17所示的一个非常简单的两层神经网络模型案例来推导BP算法：
+
+我们假设数据输入为：$\{(X_i,Y_i)\}_{i=1\sim N}$。我们现在要调节图中的所有的w与b，使得输出$y$尽可能就是$Y_{i}$。那么针对某一个输入$(X,Y)$，有优化函数：
+\begin{equation}E=\frac12(y-Y)^2\end{equation}
+
+结合梯度下降法写出流程为：
+
+Step1：随机取$(\begin{array}{c}w_{11},w_{12},w_{21},w_{22},b_1,b_2,w_1,w_2,b\end{array})$；
+
+Step2：求所有的$\frac{\partial E}{\partial w}\text{与}\frac{\partial E}{\partial b}$；
+
+Step3：\begin{equation}w^{new}=w^{old}-\alpha\frac{\partial E}{\partial w}\Bigg|_{w_{old}}\\b^{new}=b^{old}-\alpha\frac{\partial E}{\partial b}\Bigg|_{b_{old}}\end{equation}；
+
+Step4：当所有$\frac{\partial E}{\partial w}\text{与}\frac{\partial E}{\partial b}$都为零时，退出循环。
+
+于是，我们可以从后向前链式求导：
+\begin{equation}\frac{\partial E}{\partial y}=y-Y\end{equation}
+\begin{equation}\begin{gathered}
+		\frac{\partial E}{\partial a_1}=\frac{\partial E}{\partial y}\cdot\frac{\partial y}{\partial z_1}\cdot\frac{\partial z_1}{\partial a_1}=(y-Y)w_1\varphi^\prime(a_1) \\
+		\frac{\partial E}{\partial a_2}=\frac{\partial E}{\partial y}\cdot\frac{\partial y}{\partial z_2}\cdot\frac{\partial z_2}{\partial a_2}=(y-Y)w_2\varphi^\prime(a_2) 
+\end{gathered}\end{equation}
+\begin{equation}\frac{\partial E}{\partial b}=\frac{\partial E}{\partial y}\cdot\frac{\partial y}{\partial b}=y-Y\end{equation}
+\begin{equation}\begin{gathered}
+		\frac{\partial E}{\partial w_1}=\frac{\partial E}{\partial y}\cdot\frac{\partial y}{\partial w_1}=(y-Y)z_1 \\
+		\frac{\partial E}{\partial w_2}=\frac{\partial E}{\partial y}\cdot\frac{\partial y}{\partial w_2}=(y-Y)z_2 
+\end{gathered}\end{equation}
+\begin{equation}
+	\begin{gathered}
+		\frac{\partial E}{\partial w_{11}} = \frac{\partial E}{\partial a_1} \cdot \frac{\partial a_1}{\partial w_{11}} = (y - Y) \cdot w_1 \cdot \varphi^{\prime}(a_1) \cdot X_1 \\
+		\frac{\partial E}{\partial w_{12}} = \frac{\partial E}{\partial a_1} \cdot \frac{\partial a_1}{\partial w_{12}} = (y - Y) \cdot w_1 \cdot \varphi^{\prime}(a_1) \cdot X_2
+	\end{gathered}
+\end{equation}
+\begin{equation}\frac{\partial E}{\partial b_1}=(y-Y)w_1\varphi^{\prime}(a_1)\end{equation}
+\begin{equation}
+	\begin{gathered}
+		\frac{\partial E}{\partial a_1} = \frac{\partial E}{\partial y} \cdot \frac{\partial y}{\partial z_1} \cdot \frac{\partial z_1}{\partial a_1} = (y - Y)w_1\varphi^\prime(a_1) \\
+		\frac{\partial E}{\partial a_2} = \frac{\partial E}{\partial y} \cdot \frac{\partial y}{\partial z_2} \cdot \frac{\partial z_2}{\partial a_2} = (y - Y)w_2\varphi^\prime(a_2)
+	\end{gathered}
+\end{equation}
+\begin{equation}\frac{\partial E}{\partial b_2}=(y-Y)w_2\varphi^{\prime}(a_2)\end{equation}
+
+上面的式子中，非线性函数（激活函数）决定了最终的化简结果，下面列举几种最常用的非线性函数：
+
+（1）$\varphi(x)=sigmoid(x)=\frac1{1+e^{-x}}$
+
+$\varphi^\prime(x)=\varphi(x)[1-\varphi(x)]$
+
+（2）$\varphi(x)=\tanh(x)=\frac{e^x-e^{-x}}{e^x+e^{-x}}$
+
+$\varphi^{\prime}(x)=1-\varphi^2(x)$
+
+在深度学习中，常用以下激活函数：
+
+（3）$\varphi(x)=relu(x)=\max(0,x)$
+
+$\varphi'(x)=\begin{cases}1,x>0\\0,x\leq0\end{cases}$
+
+意义：压缩小于0的数，将其变成0.使该层神经网络中活跃的参数减少，降低训练复杂度。事实上，这种做法往往太过武断，实际常用LeakRelu函数。
+
+（4）$\varphi(x) = \text{leakrelu}(x) = 
+\begin{cases} 
+	x, & x > 0 \\
+	\varepsilon x, & x \leq 0 
+\end{cases}$
+
+$\varphi^{\prime}(x)=\begin{cases}1,x>0\\\varepsilon,x\leq0\end{cases}$
+
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.3\textwidth]{"figures/图20.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{LeakRelu函数图像} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+接下来，我们来推导一般形式的BP前馈神经网络的相关步骤。首先，将一个含有l层神经元的神经网络向量化，如图21：
+
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图21.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{网络向量化} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+不妨设$\delta_{i}^{(m)}=\frac{\partial E}{\partial z_{i}^{(m)}}$，用以表示求第m层z的第i个分量的偏导数。
+
+Step1：
+\begin{equation}\delta_i^{(l)}=\frac{\partial E}{\partial z_i^{(l)}}=\frac{\partial E}{\partial y_i}\frac{\partial y_i}{\partial z_i^{(l)}}=(y_i-Y_i)\varphi^{\prime}(z_i^{(l)}) \end{equation}
+
+Step2：（递推公式）
+\begin{equation}\delta_i^{(m)}=\frac{\partial E}{\partial z_i^{(m)}}=\frac{\partial E}{\partial a_i^{(m)}}\cdot\frac{\partial a_i^{(m)}}{\partial z_i^{(m)}}=(\sum_{j=1}^{m-1}\delta_j^{(m+1)}\cdot W_{ij})\cdot\varphi^{\prime}(z_i^{(m)})\end{equation}
+
+Step3：
+\begin{equation}\begin{cases}\frac{\partial E}{\partial W_{ij}^{(m)}}=\delta_j^{(m)}a_i^{(m-1)}\\\frac{\partial E}{\partial b_i^{(m)}}=\delta_i^{(m)}\end{cases}\end{equation}
+
+Step4：联立上述三个式子可以求出所有的w与b，此后更新参数：
+\begin{equation}w^{new}=w^{old}-\alpha\frac{\partial E}{\partial w}\bigg|_{w_{old}}\\b^{new}=b^{old}-\alpha\frac{\partial E}{\partial b}\bigg|_{b_{old}}\end{equation}
+
+综上所述，我们可以总结出BP算法的四个步骤如下：
+
+Step1:随机初始化（W与b）；
+
+Step2：训练样本$(X,Y)$，代入网络，可求出所有的$( z,a,y )$；
+
+Step3：链式法则求偏导：$(\frac{\partial E}{\partial w}\text{与}\frac{\partial E}{\partial b}\text{)}$；
+
+Step4：更新参数，循环，直至停止训练。
+\subsection{softmax回归}
+我们从线性回归任务说起，从回归到多分类任务，回归任务通常将单连续数值作为输出、位于自然区间R、将跟真实值的区别作为损失。而多分类任务通常有多个输出，输出i是预测为第i类的置信度。我们可以将线性回归任务单纯的理解为单层神经网络：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图22.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{单层神经网络} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+对类别进行一位有效编码$y=[y_1,y_2,...,y_n]^T$，其中
+\begin{equation}y_i=\begin{cases}1,i=y\\0,else\end{cases}\end{equation}
+
+使用\textbf{均方损失}训练，最大值即为预测：
+\begin{equation}\hat{y}=\arg\max_io_i\end{equation}
+
+为了达到将\textbf{输出直接视为概率}这一目标，我们需要\textbf{校验比例}，即将未规范化的预测变换为非负数并且总和为1，同时让模型保持可导的性质。为此，引入softmax因子，按下式输出匹配概率，并将概率$y\text{ 和 }\hat{y}$的区别作为损失：
+\begin{equation}\begin{align}
+		\hat{y} &= \text{soft max}(o) \\
+		\hat{y}_i &= \frac{\exp(o_i)}{\sum_k \exp(o_k)}
+\end{align}\end{equation}
+
+需要注意的是，softmax运算不会改变未规范化的预测o之间的大小次序，只会确定分配给每个类别的概率。尽管softmax是一个非线性函数，但softmax回归的输出仍然由输入特征的仿射变换决定。因此，softmax回归是一个线性模型（linear model）。
+
+为了提高计算效率，我们会采取小批量样本进行矢量计算，于是可以得到softmax回归的非常漂亮的向量化表达形式：
+
+\begin{equation}\begin{aligned}&O=XW+b\\&\hat{Y}=\mathrm{softmax}(O)\end{aligned}\end{equation}
+
+下面介绍\textbf{交叉熵损失}，交叉熵常用来衡量两个概率的区别：
+\begin{equation}H(p,q)=\sum_i-p_i\log(q_i)\end{equation}
+
+将它作为损失函数：
+\begin{equation}l(y,\hat{y})=-\sum_iy_i\log\hat{y}_i=-\log\hat{y}_y\end{equation}
+
+其梯度是真实概率与预测概率的区别：
+\begin{equation}l^{\prime}(y,\hat{y})=\mathrm{softmax}(o)_i-y_i\end{equation}
+
+【总结】
+
+1.softmax回归实际上是一个多分类模型；
+
+2.使用softmax因子得到每个类的预测置信度；
+
+3.使用交叉熵来衡量预测和标号的区别。
+
+\subsection{Dropout}
+\textbf{丢弃法}（也称\textbf{暂退法}，Dropout）的思考动机是，—个好的模型需要对输入数据的扰动鲁棒，以期提高模型的泛化能力，使用有噪音的数据等价于Tikhonov正则。在训练过程中，在计算后续层之前向网络的每一层注入噪声。（即在层间加入噪音）。当训练一个有多层的深层网络时，注入噪声只会在输入—输出映射上增强平滑性。
+
+无偏差的加入噪音，对$x$加入噪音$x^{\prime}$，我们希望：
+\begin{equation}E(x')=x\end{equation}
+
+丢弃法对每个元素进行如下扰动：
+\begin{equation}x_i'=\begin{cases}0 ,&with p robablity p\\[2ex]\frac{x_i}{1-p},&else\end{cases}\end{equation}
+
+实际使用中，通常将丢弃法作用在隐藏全连接层的输出上。
+
+推理中，正则项只在训练中使用，他们影响模型参数的更新，丢弃法直接返回输入：
+\begin{equation}h=dropout(h)\end{equation}
+
+这样也能保证确定性的输出。
+
+总结一下，有以下三点需要注意：
+
+（1）丢弃概率是控制模型复杂度的超参数；
+
+（2）丢弃法将一些输出项随机置0来控制模型复杂度；
+
+（3）常作用在多层感知机的隐藏层输出上。
+
+\subsection{数值稳定性}
+\subsubsection{梯度消失}
+本节，我们就前文BP算法中的$(w,b)$初始化这一操作所引发的梯度消失进行讨论。如果$w^Tx+b$一开始很大或很小，那么梯度将趋近于0，反向传播后前面与之相关的梯度也趋近于0，导致训练缓慢。因此，我们需要使$w^Tx+b$一开始就在零附近。
+
+一种比较简单有效的办法是：$(w,b)$的初始化从区间$(-\frac1{\sqrt{d}},\frac1{\sqrt{d}})$均匀随机取值，其中$d$为$(w,b)$所在层的神经元个数。可以证明：如果$x$服从正态分布，均值为0，方差为1，且各个维度无关，而$(w,b)$是$(-\frac1{\sqrt{d}},\frac1{\sqrt{d}})$的均匀分布，则$w^Tx+b$是均值为0，方差为$\frac13$的正态分布。
+
+\subsubsection{梯度爆炸}
+考虑有如下$d$层的神经网络：
+\begin{equation}h^t=f_t(h^{t-1})\quad and\quad y=\ell\cdot f_d\cdot...\cdot f_1(x)\end{equation}
+
+计算损失$l$关于参数$W_{t}$的梯度：
+\begin{equation}\begin{aligned}\frac{\partial\ell}{\partial W_t}=\frac{\partial\ell}{\partial h_d}\cdot\frac{\partial h_d}{\partial h_{d-1}}\cdot...\cdot\frac{\partial h_{t+1}}{\partial h_t}\cdot\frac{\partial h_t}{\partial W_t}\end{aligned}\end{equation}
+式（35）涉及向量求导，得到矩阵，因此会发生梯度爆炸的现象。解释是：如果使用线性修正单元作为激活函数，则有$\prod_{i=t}^{d-1}\frac{\partial h^{i+1}}{\partial h^{i}}=\prod_{i=t}^{d-1}\operatorname{diag}\left(\sigma^{\prime}(w^{i}h^{i-1})\right)(w^{i})^{T}$的一些元素会来自于$\prod_{i=t}^{d-1}(w^{i})^{T}$。此时，如果$(d-t)$很大，那么值将会很大。
+
+梯度爆炸一般会导致两个问题：其一是值超出值域（infinity），对于16位浮点数尤为严重（数值区间$6e^{-5}{\sim}6e^{ 4}$）；其二是对学习率敏感，如果学习率太大则造成大参数值，这就意味着造成更大的梯度；如果学习率太小通常训练无进展。由此，我们可能需要在训练过程不断调整学习率。
+
+类似的，如果使用Sigmoid函数作为激活函数，就会导致上式中的元素值是$(d-t)$个小数相乘，结果会非常小，接近于零，因此会发生梯度消失现象。这通常会带来三个问题：其一，梯度值变成0，对16位浮点数尤为严重；其二，不论如何选择学习率，训练都没有进展；其三，对于底部层尤为严重，仅仅顶部层训练得好，无法使神经网络更深。
+
+总之，合理的权重初始值和激活函数的选取可以提升数值稳定性。
+
+\subsection{卷积神经网络与CV}
+\subsubsection{何谓卷积？}
+要学\textbf{卷积神经网络}（Convolutional Neural Networks, CNN），首当其冲的是理解卷积运算这个概念。卷积的计算公式很简洁：
+\begin{equation}\left(f^*g\right)\left(t\right)=\int f\left(\tau\right)g\left(t-\tau\right)d_\tau \end{equation}
+
+乍一看，令人头疼而无从下手。事实上，它用了一个极简的数学公式漂亮地描述了一个动态过程。用一个生动形象的例子，便是火车进山洞的过程。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图23.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{理解卷积——火车进山洞} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+观察图23，假设山洞是函数$f(t)$，沿y轴逆向行驶的火车是函数$g(t)$。想象一下，为使火车面向山洞，即在y轴左侧沿着正方向行驶，函数经过旋转后则变为$g(t-\tau)$。此后火车开始运动，乘积$f(\tau) g(t-\tau)$表示的是任一时刻t时，两者相对的位置。再将其求积分，就描述了\textbf{两者相互作用过程中重叠的部分}。这便是卷积的意义。
+
+卷积有如下的性质：
+
+\textbf{性质1}：卷积函数既可以是连续的，也可以是离散的。
+
+\textbf{性质2}：\textbf{可交换性}，理解是火车进山洞的过程也可以理解为山洞进火车，运动是相对的。
+
+\textbf{性质3}：在深度学习领域，由于对称性，互相关运算可以等价于卷积运算。
+
+在卷积的计算公式中，第一个参数$t$称为\textbf{输入}，第二个参数$\tau $称为\textbf{核函数（与SVM里的不一样）}，卷积运算后的输出结果称为\textbf{特征映射}。现实中，核函数往往是高维的，以二维为例，卷积运算可以写为：
+\begin{equation}\left(I^*K\right)\left(i,j\right)=\sum\sum I\left(m,n\right)K\left(i-m,j-n\right)\end{equation}
+
+交换后的式子是：
+\begin{equation}\left(K^*I\right)\left(i,j\right)=\sum_m\sum_nI\left(i-m,j-n\right)K\left(m,n\right)\end{equation}
+
+图24是一个计算卷积的实际例子：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图24.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{卷积运算简单示例} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+要求计算特征映射矩阵中位于右下角的元素，便是左侧大矩阵中右下角的蓝色区域矩阵经过核函数矩阵作用后的输出，结果为将每个元素对应相乘并相加：
+\begin{equation}3\times(-1)+4\times1+5\times(-1)+3\times1+2\times1+1\times1+3\times(-1)+4\times1+5\times(-1)=-2\end{equation}
+
+\subsubsection{超参数——填充与步幅}
+\textbf{填充}指的是在输入周围添加额外的行和列，这是为正确计算卷积而产生的操作。如下面的示例中，输入是一个$3\times3$的矩阵，卷积核是一个$2\times2$的矩阵，此时无法直接计算卷积的结果。因此，我们需要将输入周围一圈补上零，再进行正确的卷积计算。
+\begin{equation}\begin{bmatrix}0&0&0&0&0\\0&0&1&2&0\\0&3&4&5&0\\0&6&7&8&0\\0&0&0&0&0\end{bmatrix}*\begin{bmatrix}0&1\\2&3\end{bmatrix}=\begin{bmatrix}0&3&8&4\\9&19&25&10\\21&37&43&16\\6&7&8&0\end{bmatrix}\end{equation}
+
+填充$p_{h}$行和$p_{w}$列，输出形状为：
+\begin{equation}(n_h-k_h+p_h+1)\times(n_w-k_w+p_w+1)\end{equation}
+
+通常取$p_{h}=k_{h}-1 ,p_{w}=k_{w}-1$，
+
+（1）当为奇数时，在上下两侧填充$\frac{p_{h}}2$；
+
+（2）当为偶数时，在上侧填充$\lceil p_{h}/2\rceil $，在下侧填充$\lfloor p_{h}/2\rfloor $。
+
+\textbf{步幅}是指行和列的滑动步长。因为填充减小的输出大小与层数呈线性相关，所以需要大量的计算才能够得到较小输出。例如给定输出大小$224\times224$像素，在使用$5\times5$的卷积核的情况下，需要44层将输出降低到$4\times4$像素。在这一背景下，为了弱化计算量，因此产生了改动滑动步长的想法，即让每次卷积扫过的间隔变大。
+
+例：用高度为3，宽度为2的步幅计算下列输入的卷积输出。（图25所示的计算过程演示了输出中位于右上角的结果的来源）
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.5\textwidth]{"figures/图25.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{计算卷积输出的过程，注意标红之处} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+给定高度为$s_{h}$和宽度为$s_{w}$的步幅，输出形状是：
+\begin{equation}\lfloor(n_h-k_h+p_h+s_h)/s_h\rfloor\times\lfloor(n_w-k_w+p_w+s_w)/s_w\rfloor \end{equation}
+
+（1）如果$p_{h}=k_{h}-1 ,p_{w}=k_{w}-1$，输出形状是：
+\begin{equation}\lfloor(n_h+s_h-1)/s_h\rfloor\times\lfloor(n_w+s_w-1)/s_w\rfloor \end{equation}
+
+（2）如果输入高度和宽度可以被步幅整除，输出形状是：
+\begin{equation}(n_h/s_h)\times(n_w/s_w)\end{equation}
+
+总结一下，填充和步幅都是卷积层的超参数。填充的主要作用是控制输出形状的减少量；步幅则是可以成倍的减少输出形状。
+
+\subsubsection{超参数——多输入多输出通道}
+卷积神经网络使用者往往会非常仔细的设置的超参数，便是多输入和多输出通道了。彩色图像可能有RGB三个通道，如果简单粗暴的直接采用单通道（转换为灰度图像）的话会丢失信息。每个通道都有一个卷积核，其运算结果是所有通道卷积结果的和。示例如图26：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.75\textwidth]{"figures/图26.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{通道示例} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+需要注意的是，无论有多少输入通道，到目前为止我们只用到单输出通道。我们可以有多个三维卷积核，每个核生成一个输出通道。每个输出通道可以识别特定模式，输入通道核识别并组合输入中的模式。
+
+在实际任务中，$1\times1$的卷积层$(k_{h}=k_{w}=1)$是一个受欢迎的选择，它不识别空间模式，只是起到融合通道的作用，等价于一个全连接层。
+计算复杂度：
+\begin{equation}(\text{浮点计算数}FLOP)O(c_ic_0k_hk_wm_hm_w)\end{equation}
+
+举例：如果是10层，1M样本，10PFLOPs，使用CPU：0.15TF，需要计算18小时；使用GPU：12TF，需要计算14分钟。
+
+\subsubsection{池化}
+从一个简单的例子说起，式（46）是一个完成检测垂直边缘的任务：
+\begin{equation}X{:}\begin{bmatrix}1&1&0&0&0\\1&1&0&0&0\\1&1&0&0&0\\1&1&0&0&0\end{bmatrix}*K{:}\begin{bmatrix}1&-1\end{bmatrix}=Y{:}\begin{bmatrix}0&1&0&0\\0&1&0&0\\0&1&0&0\\0&1&0&0\end{bmatrix}\end{equation}
+
+这样，就实现了输出Y中的垂直边缘被检测出的效果。这个例子也反映了\textbf{卷积对位置敏感的特性}。在实际任务中，我们得到的图像往往不可能是完美的：照明条件、物体位置、比例、外观等因素因图像而异。因此我们在处理计算机视觉的任务时，往往需要一定的\textbf{平移不变性}，在发生一些扰动（一定范围内的变化时），我们也要有办法去应对，使输出不会产生明显的变化（基本不变）。
+
+而\textbf{池化层}（pooling），也称为\textbf{汇聚层}便应运而生，其作用是降低卷积层对位置的敏感性，同时降低对空间降采样表示的敏感性。
+
+最常见的两种简单池化方法是\textbf{最大池化法}与\textbf{平均池化法}。
+
+以二维最大池化为例，就是返回滑动窗口中的最大值，示例如下：
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.5\textwidth]{"figures/图27.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{二维最大池化简单示例} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+以上面的垂直边缘检测示例为例，如果经过$2\times2$的最大池化后，输出如下：
+\begin{equation}\begin{bmatrix}1&1&1&0\\1&1&1&0\\1&1&1&0\\1&1&1&0\end{bmatrix}\end{equation}
+
+可以发现，相比原来单纯的卷积操作，经最大池化后的结果左右各可容1位像素移位。这样便提升了模型的容错率，增强了在实际中运用的效果。
+
+（1）最大池化层：每个窗口中最强的模式信号；
+
+（2）平均池化层：每个窗口中的模式信号取平均值。
+
+下面做个简单的总结：
+
+·池化与卷积层类似，都具有填充、步幅以及窗口大小作为超参数；
+
+·池化层没有可学习的参数；
+
+·在每个输入通道应用池化层以获得相应的输出通道；
+
+·$\text{输出通道数}=\text{输入通道数}$
+
+\subsubsection{计算机视觉}
+
+60 多年来，科学家和工程师一直在尝试开发各种方法，让机器能够看到和理解视觉数据。 在 1959 年的第一次实验中，神经生理学家向一只猫展示一组图像，试图唤起猫大脑的反应。 他们发现猫会先对硬边缘或线条做出反应，从科学角度来说，这意味着图像处理从简单的形状开始，例如直边。
+
+大约在同一时期，第一个计算机图像扫描技术成功地开发出来，使计算机能够将图像数字化并获取图像。 1963 年，计算机能够将二维图像转换为三维形式，标志着第二个里程碑的实现。 在 20 世纪 60 年代，人工智能作为一个学术域研究诞生了，同时也标志着人们开始探求依靠人工智能解决人类视觉问题的方法。
+
+1974 年，光学字符识别 (OCR) 技术走向市场，它能够识别以任何字体或字型打印的文字。同样，智能字符识别 (ICR) 能够使用神经网络辨认手写文字。此后，OCR 和 ICR 广泛地运用到文件和发票处理、车牌识别、移动支付、机器翻译和其他常见领域。
+
+1982 年，神经系统科学家 David Marr 证实了视觉分层工作原理，并推出了使机器能够检测边缘、角落、曲线和类似的基本形状的算法。 与此同时，计算机科学家 Kunihiko Fukushima 开发了一个能够识别模式的细胞网络。 这个网络称为 Neocognitron，它在一个神经网络中包含了多个卷积层。
+
+到 2000 年，物体识别成为研究重点，2001 年，第一个实时人脸识别应用诞生。 在 21 世纪初，逐渐形成了视觉数据集标记和注释的标准化实践。 2010 年，ImageNet 数据集公开可用。 该数据集包含上千种物体的数百万张标记的图像，为如今使用的 CNN 和深度学习模型奠定了基础。 2012 年，来自多伦多大学的团队带着一个 CNN 模型参加了图像识别竞赛。 这个名为 AlexNet 的模型显着降低了图像识别的错误率。 在这一次突破后，错误率已经下降到仅仅百分之几的水平。
+
+卷积网络发展很快，笔者仅介绍一个简单的卷积网络如下：LeNet诞生于20世纪末期，是卷积神经网络中的早期成功代表，用于识别图像中的手写数字。LeNet先使用卷积层来学习图片空间信息，再使用卷积层来降低敏感度，然后使用全连接层来转换到类别空间。LeNet由两个部分组成：\textbf{卷积编码器}和\textbf{全连接层密集块}。
+
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.9\textwidth]{"figures/图28.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{LeNet空间结构示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+\subsection{循环神经网络与NLP}
+\subsubsection{循环神经网络导论}
+循环神经网络 (RNN) 是一种使用序列数据或时序数据的人工神经网络。 这些深度学习算法常用于顺序或时间问题，如语言翻译、自然语言处理 (nlp)、语音识别、图像字幕等；它们包含在一些流行的应用中，比如 Siri、语音搜索和 Google Translate。 与前馈神经网络和卷积神经网络 (CNN) 一样，循环神经网络利用训练数据进行学习。 区别在于“记忆”，因为它从先前的输入中获取信息，以影响当前的输入和输出。 虽然传统的深度神经网络假设输入和输出相互独立的，但循环神经网络的输出依赖于序列中先前的元素。 尽管未来的活动也可能有助于确定特定序列的输出，但是单向循环神经网络无法在预测中说明这些事件。
+
+让我们举个惯用语的例子来帮助解释循环神经网络 (RNN)：“feeling under the weather”（感觉身体不舒服），这通常是指某人病了。 为了体现出这个惯用语的意思，必须按这个特定顺序进行表达。 因此，循环神经网络需要考虑到该惯用语中每个单词的位置，并使用这些信息来预测序列中的下一个单词。
+
+循环神经网络 (RNN) 的另一个显著特征是它们在每个网络层中共享参数。 虽然前馈网络的每个节点都有不同的权重，但循环神经网络在每个网络层都共享相同的权重参数。 尽管如此，这些权重仍可通过反向传播和梯度下降过程进行调整，以促进强化学习。
+
+循环神经网络 (RNN) 利用随时间推移的反向传播 (BPTT) 算法来确定梯度，这与传统的反向传播略有不同，因为它特定于序列数据。 BPTT 的原理与传统的反向传播相同，模型通过计算输出层与输入层之间的误差来训练自身。 这些计算帮助我们适当地调整和拟合模型的参数。 BPTT 与传统方法的不同之处在于，BPTT 会在每个时间步长对误差求和，而前馈网络则不需要对误差求和，因为它们不会在每层共享参数。
+
+通过这个过程，循环神经网络 (RNN) 往往会产生两个问题，即梯度爆炸和梯度消失。 这些问题由梯度的大小定义，也就是损失函数沿着错误曲线的斜率。 如果梯度过小，它会更新权重参数，让梯度继续变小，直到变得可以忽略，即为 0。 发生这种情况时，算法就不再学习。 如果梯度过大，就会发生梯度爆炸，这会导致模型不稳定。 在这种情况下，模型权重会变得太大，并最终被表示为 NaN。 这些问题的一种解决方案就是减少神经网络中隐藏层的数量，以便消除循环神经网络 (RNN) 模型中的一些复杂性。
+
+下面介绍几种常见的循环神经网络变种：
+
+1.\textbf{双向循环神经网络}（BRNN)：这是循环神经网络 (RNN) 的网络架构变体。 单向循环神经网络 (RNN) 只能从先前输入中抽取数据，做出有关当前状态的预测；而双向循环神经网络 (RNN) 还可以拉取未来的数据，从而提高预测的精度。 回到前面那个“feeling under the weather”的例子，如果模型知道该序列中的最后一个单词是“weather”，就更有可能预测该词组中的第二个单词是“under”。
+
+2.\textbf{长短期记忆} (LSTM)：这是一种比较流行的循环神经网络 (RNN) 架构，由 Sepp Hochreiter 和 Juergen Schmidhuber 提出，用于解决梯度消失问题。 在他们的论文（链接位于 IBM 外部）中，他们着力解决长期依赖问题。 也就是说，如果影响当前预测的先前状态不是最近发生的，那么循环神经网络 (RNN) 模型可能无法准确预测当前状态。 例如，假设我们想要预测以下斜体句子“Alice is allergic to nuts. She can't eat peanut butter.”（Alice 对坚果过敏。她不能吃花生酱）。 “坚果过敏”上下文可以帮助我们预测不能吃的食物含有坚果。 但是，如果上下文是之前的几句话，那么循环神经网络 (RNN) 就很难甚至无法连接信息。 作为补救措施，LSTM 在神经网络的隐藏层中包含一些“元胞”(cell)，共有三个门：一个输入门、一个输出门和一个遗忘门。 这些门控制着预测网络中的输出所需信息的流动。  例如，如果在先前的句子中，性别代词（比如 she）重复出现了多次，那么可将其从元胞状态中排除。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图29.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{LSTM网络框架图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+如图29，LSTM网络主要由输入词$x_{t}$，细胞状态$c_{t}$，隐层状态$h_{t}$，遗忘门$f_{t}$，记忆门$i_{t}$，输出门$o_{t}$六部分组成。其基本工作原理为：在细胞状态中进行信息遗忘以及记忆新的信息，使得有用的信息得以传递，无用的信息得以丢弃。下面将计算步骤分述如下：
+
+Step1：输入词进入处理细胞中。
+
+Step2：计算遗忘门：
+\begin{equation}f_t=\sigma\big(w_f\cdot\big[h_{t-1},x_t\big]+b_f\big)\end{equation}
+
+Step3：计算记忆门与当前时刻的细胞状态：
+\begin{equation}i_{t}=\sigma\left(w_{i}\cdot\left[h_{t-1},x_{t}\right]+b_{i}\right)\\\tilde{c}_{t}=\mathrm{tanh}\left(w_{c}\cdot\left[h_{t-1},x_{t}\right]+b_{c}\right)\end{equation}
+
+Step4：计算当前时刻细胞状态：
+\begin{equation}c_t=f_t\cdot c_{t-1}+i_t\cdot\tilde{c_t}\end{equation}
+
+Step5：计算输出门与当前时刻的隐层状态：
+\begin{equation}o_{t}=\sigma\big(w_{o}\cdot\big[h_{t-1},x_{t}\big]+b_{o}\big)\\h_{t}=o_{t}\cdot\mathrm{tanh}\left(c_{t}\right)\end{equation}
+
+Step6：最终得到与句子长度相同的隐层状态序列：
+\begin{equation}\{h_0,h_1,...,h_{n-1}\}\end{equation}
+
+\textbf{双向长短期记忆网络}（BiLSTM）是一种改进版的LSTM，它加入了从后往前的逆向信息编码过程，能够更好的捕捉双向的语义依赖关系，这对于提高多分类任务的准确率有很大帮助。如分析语句“我不觉得你很差”时，“不”是对后面“差”的修饰，双重否定表示肯定，该句的情感极性分类为“褒义”。而一些简单的NLP模型捕捉到“不”等否定词时一般容易判断为负面的意思，因此，在处理较为细腻的情感分类任务时，BiLSTM拥有较大的优势。
+
+
+3.\textbf{门控循环单元} (GRU)：这种循环神经网络 (RNN) 变体类似于 LSTM，因为它也旨在解决 RNN 模型的短期记忆问题。 但它不使用“元胞状态”来调节信息，而是使用隐藏状态；它不使用三个门，而是两个：一个重置门和一个更新门。 类似于 LSTM 中的门，重置门和更新门控制要保留哪些信息以及保留多少信息。
+
+\subsubsection{注意力机制}
+Transformer模型是2017年由Google提出的，其最引人入胜的一点是采用了自注意力机制取代了传统的循环神经网络。注意力机制的灵感来自于对人类日常行为中的“注意力”的研究，人类的注意力资源是有限的，我们在关注的目标区域投入更多的注意力资源，从而在目标区域获得更多的信息，抑制其他无用的信息。一言以蔽之，其目的就是为了在大量繁琐的信息中筛选出有价值的信息。
+
+在注意力机制中有三个重要的向量，分别是查询向量（Query vector）、键向量（Key vector）、值向量（Value vector）。查询向量表示当前需要处理的信息，模型根据查询向量在输入序列中查找相关信息；键向量是来自输入序列的一组表示向量，根据查询计算注意力权重，反映不同位置的输入数据与查询的相关性；值向量是来自输入序列的一组表示向量，用于根据注意力权重计算加权和，得到最终的注意力输出向量，包含了与查询最相关的输入信息。
+
+注意力机制通过计算Q与各个K之间的相似性，为每个V分配一个权重。然后，将加权的值相加（每个V乘以对应的权重，即注意力分数），得到一个蕴含输入序列最相关信息的输出向量。这个输出向量的形状与Q相同，将用于计算下一步模型计算的输入。注意力机制可以描述为：
+\begin{equation}Attention\left(Q,K,V\right)=soft\max\left(\frac{QK^T}{\sqrt{d_k}}\right)\cdot V\end{equation}
+
+\subsubsection{Transformer}
+Transformer模型可以简单的分为四个部分：输入词向量、N层编码器（Encoder）、N层解码器（Decoder）、输出。模型的网络结构如图x，下面笔者将按照这四个组件简述工作机理。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图30.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{Transformer网络全貌} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+1.输入层
+
+将需要处理的文本序列转换为一个输入词向量，然后为这些词向量添加位置编码，从而为模型提供位置信息，输出进入编码层。
+
+位置编码的目的是让模型能够区分输入序列中不同位置的词，模型采用的是正弦位置编码是因为其具有平滑性和保留相对位置信息等优点，公式如下：
+\begin{equation}PE(pos,2i)=\sin\left(\frac{pos}{10000^{2i/d}}\right)\\PE(pos,2i+1)=\cos\left(\frac{pos}{10000^{2i/d}}\right)\end{equation}
+
+2.编码器
+
+编码器是由多个相同的结构层堆叠而成，每一个层包含了两个主要部分:多头自注意力和前馈神经网络。
+
+词向量和位置编码将结合起来进入到编码器的第一层，首先进行多头自注意力计算。每个头都有自己的注意力权重，这些权重将被用来对输入序列的不同部分加权求和。多头自注意力的输出会进入残差连接，经过层归一化处理。这样做有助于稳定模型的训练过程，提高收敛速度。此后，进入到前馈神经网络，这个过程会重复执行N次，最终的输出将被传递给解码器。
+
+3.解码器
+
+解码器的主要任务是基于编码器输出的上下文向量生成目标序列，它同样也由多个相同的结构层堆叠而成。每个层主要包含多头自注意力，编码器—解码器注意力机制，前馈神经网络。
+
+首先进行多头自注意力计算，与编码系中的多头自注意力计算不同的是，解码器要遵循一个重要的原则：\textbf{只能关注已经生成的输出序列的位置，避免在生成新词时看到未来}。解码器可以捕捉目标序列内部和输入序列与目标序列之间的依赖关系，进一步增强模型的表达能力。接下来的步骤和编码器类似，最终的输出将用于预测目标序列。
+总而言之，解码器接收属于自己的输入，并结合编码器的输出（上下文向量）来生成目标序列预测值。
+
+4.输出层
+
+解码器完成了所有层的处理后，将得到一个表示目标序列的向量，这个向量代表了transformer模型在序列中学习到的全部特征表示。接下来经过一个线性层和一个softmax层，将结果输出为概率，方便我们选择最有可能是结果的词。
+
+关于Transformer，大家可以参见黄佳（2023）《层峦叠翠上青天：搭建GPT核心组件——Transformer》。
+
+如图31所示的BERT网络，便是利用了Transformer。BERT模型是Google团队于2019年提出的，其本质是一种预训练的深度学习模型。它基于Transformer架构，整个网络可以看作是多层自注意力的叠加。
+
+BERT模型具有两个重要的性质，其一是仅使用Transformer中的编码器架构，是一个掩码语言模型；其二是具有双向性，编码器的双向结构使得BERT能够充分利用上下文信息，每个位置的向量表示都通过上下文信息一起来学习。综上所述，BERT模型更加适合面向理解的情感分析任务。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图31.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{BERT网络} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+\subsubsection{自然语言处理与情感分析}
+情感分析是一种自然语言处理技术，旨在识别和理解文本中的情感和情绪倾向。通过使用机器学习和自然语言处理技术，情感分析可以自动分析文本，并将其归类为积极、消极或中性情感。这项技术在社交媒体挖掘、产品评论分析和舆情监控等领域得到广泛应用，帮助企业了解公众对其产品和服务的看法。本部分阐述目前深度学习领域中情感分析的研究进展与技术方法。
+
+丁锋（2022）团队提出了BiLSTM - CRF模型并将其应用到基于方面的情感分析任务中。利用双向长短期记忆网络可以捕获长距离双向语义依赖关系并且能学习文本语义信息的特点，预测句子级别的全局最佳标签序列[3]。Hu D. (2016) 等人提出了上下文推理网络进行对话情绪识别，从认知角度充分理解会话上下文。其还设计了多轮推理模块来提取和整合情绪线索。Luo W. (2022) 使用Word2Vec对语料库进行训练，得到文本词向量表示后使用引入注意力机制的LSTM模型进行文本特征提取，结合交叉熵训练模型并将模型应用到旅游问题文本分类方法中。RNN只能进行顺序运算，不能并行运算。这一缺点使其在具有更深和更多参数的问题趋势中逐渐占据下风。
+
+Yu S. (2019) 等人提出了一种基于BERT的文本分类模型BERT4TC。该模型通过构造辅助句将分类任务转化为二元句对，旨在解决训练数据受限问题和任务感知问题。Hu Y. (2022) 则是指出BERT学习一种语言表示法，可以用于对许多NLP任务进行微调。主要方法是增加数据，提高计算能力，并设计训练程序以获得更好的结果。
+
+高珊（2024）对于文本分类中的BERT模型做出了充分的综述[4]。Liu Y. (2019)等人在 BERT 的基础上进一步改进，将新模型命名为 RoBERTa。它采用动态掩蔽方法，每次生成掩蔽模式，并将序列送入模型；Lan Z. (2019) 通过减少了碎片向量的长度和与所有编码器共享参数的方式实现了BERT的参数数量的减少，并实现了跨层参数共享，并将该模型命名为ALBERT (A Lite BERT) 。Su H. (2022) 提出的RoCBert (Robust Chinese Bert)是一种经过训练的中文BERT，旨在解决中文字形易受对抗攻击性的问题而提出的。Dai Y. (2022) 等人分别使用标准字符级掩码、全词掩蔽以及两者的组合来训练3个中文BERT模型。
+
+今年上半年，笔者做了一个关于微博文本情感分析的任务，使用到的便是BERT以及RoBERTa模型。自然语言处博大精深，大家可以参见吴军《数学之美》。

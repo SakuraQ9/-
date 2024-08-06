@@ -1,0 +1,313 @@
+\section{支持向量机}
+早些年神经网络还不被看好的时候，支持向量机一度被认为是最科学最完美的机器学习模型，这主要是因为其具有超高的数学可解释性，且效果瞩目。我们现在就来进入支持向量机的世界吧！
+\subsection{支持向量机的基本型}
+从分类学习任务说起，存在样本集$D=\{(x_1,y_1),(x_2,y_2),...,(x_n,y_n)\},y_i\in\{-1,1\}$，要在样本空间中找到一个划分超平面，将不同类型的样本分开。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.5\textwidth]{"figures/图10.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{一些划分超平面} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+如图10所示，存在很多种划分超平面，但是究竟哪一种更好呢？显然，选择正中间的更加合适，其结果更加鲁棒，泛化能力更强。
+
+如果往更高的维度推而广之，那么这类问题便可以概括为需要在一个样本数*维度数=m*n的样本数据集（1）中，
+\setcounter{equation}{0} %新的一章，将编号公式重设为1
+
+\begin{equation}\begin{gathered}X=\begin{bmatrix}x_{11}&x_{12}&x_{13}&x_{14}&...&x_{1m}\\x_{21}&x_{22}&x_{23}&x_{24}&...&x_{2m}\\x_{31}&x_{32}&x_{33}&x_{34}&...&x_{3m}\\\vdots&\vdots&\vdots&\vdots&...&\vdots\\x_{n1}&x_{n2}&x_{n3}&x_{n4}&...&x_{nm}\end{bmatrix}\end{gathered}\end{equation}
+寻找一个划分超平面，其方程可以写成如下形式：
+\begin{equation}w_1x_1+w_2x_2+\cdots+w_mx_m+b=0\end{equation}
+式（2）中，w可以简单理解为x所对应的权重，其是该划分超平面的\textbf{法向量}，可以决定该超平面的方向；而b则是\textbf{偏置位移项}，可以决定该超平面与原点的距离。因此这个划分超平面将由w和b这两个参数决定。
+
+如图11所示，正中间红色的超平面即为\textbf{决策边界}(decision boundary)超平面，也就是式（2）。如果将决策边界分别向上、下移动个单位，就会形成分类决策的上下边界：
+\begin{equation}\begin{cases}w_1x_1+w_2x_2+\cdots+w_mx_m+b=c\\w_1x_1+w_2x_2+\cdots+w_mx_m+b=-c\end{cases}\end{equation}
+将式（3）中的每一项除以c，则可将上下边界超平面方程写为：
+\begin{equation}\begin{cases}w_1^{\prime}x_1+w_2^{\prime}x_2+\cdots+w_m^{\prime}x_m+b^{\prime}=1\\w_1^{\prime}x_1+w_2^{\prime}x_2+\cdots+w_m^{\prime}x_m+b^{\prime}=-1\end{cases},\text{其中}w_d^{\prime}=\frac{w_d}c,b^{\prime}=\frac bc\end{equation}
+由于上下边界超平面一定会经过一些样本点，而这些样本点距离决策边界超平面最近，因此它们决定了间隔距离，于是我们将这些样本点称作\textbf{支持向量}(support vector)，两个异类的支持向量之间的距离称作\textbf{间隔}(margin)，其可以描述为：
+\begin{equation}\gamma=\frac2{\|w\|}\end{equation}
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.7\textwidth]{"figures/图11.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{支持向量机的基本结构} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+这个间隔我们可以理解为缓冲区，如果初始数据发生了如下变化：当存在异常值进入到图11所示的间隔中时，我们是否应该为异常值牺牲间隔距离呢？我们可以将间隔理解为收入，损失理解为成本，那么问题可以转化为：同时约束收入和成本使得利润最大化，此时在最优解下得到的间隔便称作\textbf{软间隔}(soft margin).它有一定的容错率，其目的是在间隔距离与错误间找到一个平衡。关于软间隔会在后文进行描述。与之对应的有，如果要求所有样本都必须划分正确，这时得到的间隔便是\textbf{硬间隔}(hard margin).
+
+那么我们如何找到具有最大间隔(maximum margin)的超平面呢？即寻找参数w与b，使得$\gamma $最大：
+\begin{equation}
+	\underset{w, b}{\text{arg max}} \quad \frac{2}{||w||} \\
+	\text{s.t.} \begin{cases}
+		y_i (w^T x_i + b) \geq 1, \\
+		i = 1, 2, \ldots, m
+	\end{cases}
+\end{equation}
+最大化$\left\|w\right\|^{-1}$，等价于最小化$\left\|w\right\|^{2}$，所以式（6）等价于：
+\begin{equation}\begin{aligned}&\arg\min_{w,b}\frac12\|w\|^2\\&s.t.y_i(w^Tx_i+b)\geq1,i=1,2,\ldots,m\end{aligned}\end{equation}
+
+这便是\textbf{支持向量机}(support vector machine，简记为SVM)的基本型，解决上述问题便成为了该模型的关键。综上所述，支持向量机的模型算法的本质是什么呢？一言以蔽之，是在m维度上找到一个（m-1）维超平面将两类样本区分开来，\textbf{SVM是建立于结构风险最小原理的基础之上，以间隔最大化为学习策略，其算法本质是求解凸二次型规划的最优化算法}。
+\subsection{凸二次型优化理论概述}
+结合在bilibili上浙江大学胡浩基教授关于支持向量机的讲解以及南京大学周志华教授编写的西瓜书，下面我将本部分叙述如下：
+
+我们首先定义一个关于优化理论的普适定义，这个很重要，因为在后续讲解支持向量机优化问题时需要一一对应：
+
+原问题（prime problem）：
+\begin{equation}\mathrm{min}f(w)\end{equation}
+
+限制条件：
+\begin{equation}
+	\begin{cases}
+		g_i(w) \leq 0, & i = 1, 2, \ldots, k \\
+		h_i(w) = 0, & i = 1, 2, \ldots, \upsilon
+	\end{cases}
+\end{equation}
+
+对式（7）求解的核心思路是\textbf{拉格朗日乘子法}。这里直接给出拉格朗日函数表达式：
+\begin{equation}L(w,\alpha,\beta)=f(w)+\sum_{i=1}^k\alpha_ig_i(w)+\sum_{i=1}^\upsilon\beta_ih_i(w)......(\text{分量形式)}\end{equation}
+\begin{equation}=f(w)+\alpha^Tg(w)+\beta^Th(w)......(\text{向量形式)}\end{equation}
+
+\textbf{对偶问题}（dual problem）可定义如下：
+\begin{equation}\begin{aligned}&\max\theta(\alpha^*,\beta^*)=\inf_{\text{所有}w}\{L(w,\alpha^*,\beta^*)\}\\&s.t.\alpha_i^*\geq0,i=1,2,...,k\end{aligned}\end{equation}
+式（12）有以下解释：inf指的是求下确界（infimum），在本式中可以理解为限制$\alpha,\beta $，遍历所有的w求出$L_{\min}$.
+
+接着来讨论下\textbf{原问题与对偶问题的关系}：
+
+\textbf{定理}：如果$w^{*}$是原问题的解，$\alpha^*,\beta^*$是对偶问题的解，则有：
+\begin{equation}f(w^*)\geq\theta(\alpha^*,\beta^*)\end{equation}
+
+式（13）证明如下：
+\begin{equation}\theta(\alpha^*,\beta^*)=\inf_{\text{所有}w}\{L(w,\alpha^*,\beta^*)\}\leq L(w,\alpha^*,\beta^*)\end{equation}
+式（14）很好理解，某一个特解$w^{*}$一定不小于函数L的下确界（也就是的最小值）。将式（10）代入式（14）可得：
+\begin{equation}\begin{aligned}
+		&\text{续}(14)=f(w^{*})+\sum_{i=1}^{\kappa}\alpha_{i}^{*}g_{i}(w^{*})+\sum_{i=1}^{\upsilon}\beta_{i}^{*}h_{i}(w^{*}) 
+		&\leq f(w^{*})
+\end{aligned}\end{equation}
+式（14）的解释是：根据限制条件式（9），不难知道$\alpha_i^*\geq0 ,\quad g_i(w^*)\leq0$，因此$\alpha_i^*g_i(w^*)\leq0$；同理可以分析出$\beta_i^*h_i(w^*)=0$.因此，定理证毕。
+
+\textbf{定义}：
+\begin{equation}G=f(w^*)-\theta(\alpha^*,\beta^*)\geq0\end{equation}
+其中，G称为原问题与对偶问题的\textbf{间距}（dualuty Gap），对于某些特定的优化问题，可以证明出G=0，而强对偶优化问题正是这种情况：
+		
+\textbf{强对偶定理}：若$f(w)$为凸函数，线性函数$g(w)=Aw+b,h(w)=Cw+d$，则此优化问题的G=0.即若$w^{*}$是原问题的解，$\alpha^*,\beta^*$是对偶问题的解，则：
+\begin{equation}f(w^*)=\theta(\alpha^*,\beta^*)\end{equation}
+
+这意味着两点，其一是：
+\begin{equation}\theta(\alpha^*,\beta^*)=\inf_{\text{所有}w}\{L(w,\alpha^*,\beta^*)\}=L(w,\alpha^*,\beta^*)\end{equation}
+
+其二是：因为$\alpha_{i}^{*}\geq0 ,\quad g_{i}(w^{*})\leq0$，但是又要满足$\alpha_i^*g_i(w^*)=0$，所以可以得到：
+\begin{equation}\begin{aligned}&\forall i=1,2,...,k,\text{有:}\\&\alpha_{i}^{*}=0 or g_{i}^{*}(w^{*})=0\end{aligned}\end{equation}
+式（19）中，在数学中or的含义是两者中至少有一个成立（包含同时成立的情况），该式就是著名的\textbf{库恩-塔克条件}（KKT条件）。
+
+回到支持向量机的基本型，我们将求解流程概述一遍：
+
+Step1：引入拉格朗日乘子，得到拉格朗日表达式（8）；
+
+Step2：对参数w与b求偏导，并令偏导为0：
+\begin{equation}\begin{cases}w=\sum_{i=1}^m\alpha_iy_ix_i\\\\0=\sum_{i=1}^m\alpha_iy_i\end{cases}\end{equation}
+
+Step3：回代，得到对偶问题：
+\begin{equation}\max_\alpha\sum_{i=1}^m\alpha_i-\frac12\sum_{i=1}^m\sum_{j=1}^m\alpha_i\alpha_jy_iy_jx_i^Tx_j,\\s.t.\sum_{i=1}^m\alpha_iy_i=0,\alpha_i\geq0,i=1,2,...,m.\end{equation}
+
+Step4：解出$\alpha $后可以确定出最终模型是：
+\begin{equation}f(x)=w^Tx+b=\sum_{i=1}^m\alpha_iy_ix_i^Tx+b\end{equation}
+上述过程需要满足KKT条件(Karush-Kuhn-Tucker)：
+\begin{equation}\begin{cases}\alpha_i\geq0\\1-y_if(x_i)\leq0\\\alpha_i(1-y_if(x_i))=0\end{cases}\Rightarrow\text{必有}\alpha_i=0或y_if(x_i)=1.\end{equation}
+
+这反映了\textbf{解的稀疏性}：即最终模型仅与支持向量有关，支持向量机因此而得名。
+
+对于式（21）这样的二次规划问题，我们该如何求解呢？利用SMO算法求解，参见勿在浮沙筑高台《SMO算法剖析》。 
+
+\subsection{核支持向量机}
+\subsubsection{核函数的原理}
+如果在该（较低）维度不存在一个能正确划分两类样本的超平面（即\textbf{低维不可分}问题），此时的处理方式是将样本从原始空间映射到一个更高维的特征空间，使样本在这个特征空间内线性可分。如果原始空间是有限维（属性数有限），那么一定存在一个高维特征空间使样本线性可分。（这一点已经得到严格证明）
+
+在特征空间中，若样本x映射到\textbf{甚高维空间}（可理解为甚至可以高到无限维度的空间）后的向量为$\phi(x)$，划分超平面为$f(x)=w^T\phi(x)+b$，则原始问题是：
+\begin{equation}\min_{w,b}\frac12\|w\|^2,s.t.y_i(w^T\phi(x)+b)\geq1,i=1,2,...,m\end{equation}
+
+对偶问题是：
+\begin{equation}\begin{aligned}&\max_\alpha\sum_{i=1}^m\alpha_i-\frac12\sum_{i=1}^m\sum_{j=1}^m\alpha_i\alpha_jy_iy_j\phi(x_i)^T\phi(x_j)\\&s.t.\sum_{i=1}^m\alpha_iy_i=0,\alpha_i\geq0,i=1,2,...,m\end{aligned}\end{equation}
+
+其预测函数为：
+\begin{equation}f(x)=w^T\phi(x)+b=\sum_{i=1}^m\alpha_iy_i\phi(x_i)^T\phi(x_j)+b\end{equation}
+
+结合式（25）和（26）可以发现，$\phi(x_i)^T\phi(x_j)$部分只以内积形式出现，而计算甚高维空间的内积的计算量大到无法想象。此时，有没有一种方法可以绕过显式考虑特征映射和计算内积呢？这类问题的基本思路是设计一个\textbf{核函数}(kernal function)：
+\begin{equation}\kappa(x_i,x_j)=\phi(x_i)^T\phi(x_j)\end{equation}
+
+根据\textbf{Mercer定理}：若一个对称函数所对应的核矩阵半正定，则它就能作为核函数来使用。这里的核矩阵可以理解为经过映射后在甚高维空间中的距离矩阵，那么问题就转化为了在该低维空间中使用核函数来求解。直白的说，就是将先把数据映射到高维空间中，再在高维空间中作内积的问题，转化为了先在原始低维空间中作内积，再用核函数将结果映射到高维空间中。任何一个核函数，都隐式地定义了一个RKHS (Reproducing Kernel Hilbert Space, 再生核希尔伯特空间)。
+
+下面给出几种常用的核函数如图12，截取自西瓜书。
+\begin{figure}[ht] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=1.0\textwidth]{"figures/图12.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{一些常用的核函数} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+下面可将核函数的特点总结如下：
+
+1.无需知道非线性变换函数映射$\phi$的形式和参数；
+
+2.避免了维数灾难，大大减小了计算量；
+
+3.核函数的选择成为了决定核支持向量机模型的\textbf{最大变数}。
+
+\subsubsection{软间隔支持向量机}
+现实中很难确定合适的核函数，使训练样本在特征空间中线性可分。即便貌似线性可分，也很难断定是否是因过拟合造成的，于是引入软间隔(soft margin)如图13，允许在一些样本上不满足约束。
+\begin{figure}[hb] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图13.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{软间隔SVM示意图} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+此时优化的基本思路是：最大化间隔的同时, 让不满足约束的样本尽可能少：
+\begin{equation}\min_{w,b}\frac12\|w\|^2+C\sum_{i=1}^m\ell_{0/1}(y_i(w^Tx_i+b)-1)\end{equation}
+式（28）中，L是取值仅有0和1的损失函数(loss function)：
+\begin{equation}\ell_{0/1}(z)=\begin{cases}1,z<0\\0,else\end{cases}\end{equation}
+
+这里有一个障碍，损失函数非凸、非连续且不易优化，所以采用\textbf{替代损失函数}来处理问题。根据替代损失函数得到的解仍是原问题的解，具有替代损失的\textbf{一致性}(consistency)，如图14所示：
+\begin{figure}[h] % 'h' 表示在当前位置插入图像
+	\centering
+	\includegraphics[width=0.6\textwidth]{"figures/图14.png"} % 调整图片宽度为页面宽度的 80%
+	\caption{三种替代损失函数（hinge，指数，对数）} % 为图片添加标题
+	\label{fig:example} % 为图片设置标签，用于引用
+\end{figure}
+
+此模型也被称作\textbf{软间隔支持向量机}，该模型处理的原始问题是：
+\begin{equation}\min_{w,b}\frac12\|w\|^2+C\sum_{i=1}^m\max(0,1-y_i(w^Tx_i+b))\end{equation}
+
+引入松弛变量(可以解释为函数间隔，$\xi_{i}$对应数据点$x_{i}$允许偏离的量)(slack variables)：
+\begin{equation}\begin{aligned}&\min_{w,b,\xi_i}\frac12\|w\|^2+C\sum_{i=1}^m\xi_i\\&s.t.y_i(w^Tx_i+b)\geq1-\xi_i,\xi_i\geq0,i=1,2,...,m\end{aligned}\end{equation}
+
+再求解其对偶问题如下：
+\begin{equation}\max_\alpha\sum_{i=1}^m\alpha_i-\frac12\sum_{i=1}^m\sum_{j=1}^m\alpha_i\alpha_jy_iy_jx_i^Tx_j\\s.t.\sum_{i=1}^m\alpha_iy_i=0,0\leq\alpha_i\leq C,i=1,2,...,m\end{equation}
+
+根据KKT条件可知，最终模型仅与支持向量有关，也即采用hinge损失函数后仍保持了解的稀疏性。
+
+\subsubsection{核支持向量机的推导}
+
+\textbf{本小节内容非常精妙，可以打通核支持向量机的任督二脉！}
+
+针对线性不可分的一般形式的支持向量机，需要引入松弛变量，并映射到甚高维空间中，其方程如下：
+
+\textbf{原问题}：
+\begin{equation}\min\frac12\|w\|^2+C\sum_{i=1}^N\xi_i\end{equation}
+
+\textbf{限制条件}：
+\begin{equation}\begin{cases}y_i[w^T\varphi(x_i)+b]\geq1-\xi_i\\\xi_i\geq0\end{cases}\end{equation}
+式（33）是一个凸函数，这里有必要将凸函数的定义回顾一下：
+
+\textbf{凸函数的几何定义}：在一个凸函数上任意取两点，那么这两点的连线永远在函数曲线（面）的上方。换句话说，任取两点的中点处的函数值小于这两点连线段的中点纵坐标是恒成立的。将上述定义代数化，则可以得到：
+
+\textbf{凸函数的代数定义}：
+\begin{equation}\begin{aligned}&\forall w_1,w_2,\lambda\in[0,1],\text{有}:\\&f(\lambda w_1+(1-\lambda)w_2)\leq\lambda f(w_1)+(1-\lambda)f(w_2)\text{恒成立}\end{aligned}\end{equation}
+
+即使空间扩充到甚高维，该代数定义亦成立。
+
+接下来，为使方程（33）、（34）与凸优化理论小节（参见6.2节式（8）、（9））的形式一一对应起来，我们改写如下：
+
+\textbf{原问题}
+\begin{equation}\min\frac12\|w\|^2-C\sum_{i=1}^N\xi_i\end{equation}
+
+\textbf{限制条件}：
+\begin{equation}\begin{cases}1+\xi_i-y_iw^T\varphi(x_i)-y_ib\leq0\\\xi_i\leq0\end{cases}\end{equation}
+
+\textbf{对偶问题}：
+\begin{equation}
+\max_{\theta(\alpha,\beta)} \theta(\alpha,\beta) = \inf_{w,\xi_i,b} \frac{1}{2} \|w\|^2 - C \sum_{i=1}^N \xi_i + \sum_{i=1}^N \beta_i \xi_i + \sum_{i=1}^N \alpha_i [1 + \xi_i - y_i w^T \varphi(x_i) - y_i b]
+\end{equation}
+\begin{equation*}
+	\text{s.t.}\left\{
+	\begin{array}{l}
+		\alpha_i \geq 0 \\
+		\beta_i \geq 0 \\
+		i = 1,2,...,N
+	\end{array}
+	\right.
+\end{equation*}
+式（38）与式（10）、（12）的对应关系解释如下：
+
+其一，式（12）中遍历所有的$w$对应式（38）中遍历所有的$w,\xi_{i},b$；
+
+其二，式（12）中限制$\alpha$对应式（38）中限制$\alpha,\beta $；
+
+其三，式（10）中的$\sum_{i=1}^{k}\alpha_{i}g_{i}(w)$拆分成了式（38）中的$\sum_{i=1}^N\beta_i\xi_i$与
+$\sum_{i=1}^N\alpha_i[1+\xi_i-y_iw^T\varphi(x_i)-y_ib]$两项。
+
+那么，式（38）的最优解如何求呢？很明显最优解就在拉格朗日函数对三个变量分别求偏导，并令所求偏导数为零处。即：
+\begin{equation}\begin{cases}\frac{\partial L}{\partial w}=0\\\frac{\partial L}{\partial\xi_i}=0\\\frac{\partial L}{\partial b}=0\end{cases}\end{equation}
+
+这时有一个麻烦，涉及矩阵求导，于是需要引入以下两个定理：
+
+\textbf{定理1}：如果$f(w)=\frac12\|w\|^2$，则$\frac{\partial f}{\partial w}=w$.
+
+\textbf{定理2}：如果$f(w)=w^TX$，则$\frac{\partial f}{\partial w}=X$.
+
+由以上两个定理，可求出式（39）的表达式是：
+\begin{equation}\begin{cases}w-\sum_{i=1}^N\alpha_iy_i\varphi(x_i)=0......(40-1)\\-C+\beta_i+\alpha_i=0\Rightarrow\alpha_i+\beta_i=C......(40-2)\\-\sum_{i=1}^N\alpha_iy_i=0\Longrightarrow\sum_{i=1}^N\alpha_iy_i=0......(40-3)\end{cases}\end{equation}
+
+接下来就是根据式（40）来处理式（38）的过程：
+
+Step1：由式（40-2）代入式（38），观察可知形如$-C\sum\xi_i+\sum\beta_i\xi_i+\sum\alpha_i\xi_i$的结构可消去；
+
+Step2：
+\begin{equation}
+	\begin{align}
+		\frac{1}{2}{\left\|w\right\|}^2 &= \frac{1}{2}w^{T}w \\
+		&= \frac{1}{2}(\sum_{i=1}^{N}\alpha_{i}y_{i}\varphi(x_{i}))^{T}(\sum_{j=1}^{N}\alpha_{j}y_{j}\varphi(x_{j})) \\
+		&= \frac{1}{2}\sum_{i=1}^{N}\sum_{j=1}^{N}\alpha_{i}\alpha_{j}y_{i}y_{j}\varphi(x_{i})^{T}\varphi(x_{j}) \\
+		&= \frac{1}{2}\sum_{i=1}^{N}\sum_{j=1}^{N}\alpha_{i}\alpha_{j}y_{i}y_{j}\kappa(x_{i},x_{j})
+	\end{align}
+\end{equation}
+式（41）的化简结果非常精妙，其与核函数对应了起来，将所有甚高维空间中的映射向量内积的计算全部消去，转化为了使用核函数求解。
+
+Step3：式（41）中最后剩余的部分化简如下：
+\begin{equation}\begin{aligned}
+		&-\sum_{i=1}^N\alpha_iy_iw^T\varphi(x_i)=-\sum_{i=1}^N\alpha_iy_i(\sum_{j=1}^N\alpha_jy_j\varphi(x_j))^T\varphi(x_i) \\
+		&=-\sum_{i=1}^N\sum_{j=1}^N\alpha_i\alpha_jy_iy_j\varphi(x_j)^T\varphi(x_i) \\
+		&=-\sum_{i=1}^N\sum_{j=1}^N\alpha_i\alpha_jy_iy_j\kappa(x_i,x_j)
+\end{aligned}\end{equation}
+联立式（40）、（41）、（42）可得式（38）的最终化简形式为：
+\begin{equation}\theta(\alpha,\beta)=\sum_{i=1}^N\alpha_i-\frac12\sum_{i=1}^N\sum_{j=1}^N\alpha_i\alpha_jy_iy_j\kappa(x_i,x_j)\end{equation}
+
+至此，我们可以将核支持向量机的\textbf{对偶问题}形式完整的呈现如下：
+\begin{equation}\max\theta(\alpha,\beta)=\sum_{i=1}^N\alpha_i-\frac12\sum_{i=1}^N\sum_{j=1}^N\alpha_i\alpha_jy_iy_j\kappa(x_i,x_j)\end{equation}
+
+\textbf{限制条件1}：
+由$\alpha_i\geq0,\beta_i\geq0,\alpha_i+\beta_i=C$可得：$0\leq\alpha_i\leq C$.
+
+\textbf{限制条件2}：$\sum_{i=1}^N\alpha_iy_i=0$.
+
+综上所述，此对偶问题是一个已知$y$和核函数，未知所有的拉格朗日乘子的一个凸优化问题，通常的解决策略是SMO算法。
+
+这里我们需要思考一个问题，如何将求未知的$\alpha$这个问题转变为求解w与b？支持向量机模型的本质不正是要求得法向量w与偏置位移项b吗？我们从支持向量机模型的测试流程入手，其测试样本记作X，测试原理如下：
+\begin{equation}\begin{cases}if w^T\varphi(x)+b\geq0 得 y=+1\\if w^T\varphi(x)+b<0得y=-1\end{cases}\end{equation}
+
+我们会发现一个非常巧妙的点，即我们根本无需知道w的具体值，只需知道$w^T\varphi(x)+b$的结果，问题依然可以解决。这是因为支持向量机模型的本质是在做分类任务，我们只需关注分类结果为正例还是负例。
+\begin{equation}
+	\begin{aligned}
+		w^T\varphi(x) &= \sum_{i=1}^N[\alpha_iy_i\varphi(x_i)]^T\varphi(x) \\
+		&= \sum_{i=1}^N\alpha_iy_i\varphi(x_i)^T\varphi(x) \\
+		&= \sum_{i=1}^N\alpha_iy_i\kappa(x_i,x)
+	\end{aligned}
+\end{equation}
+
+接下来，如何求解b呢？这就需要用到大名鼎鼎的KKT条件了：对$\forall i=1,2,...,N$有：
+\begin{equation}\begin{cases}\beta_i=0 or\xi_i=0\\\alpha_i=0or1+\xi_i-y_iw^T\varphi(x_i)-y_ib=0\end{cases}\end{equation}
+取$0<\alpha_{i}<C$，则$\beta_i=C-\alpha_i>0$，这意味着在式（47）中对$\forall i=1,2,...,N$有：
+\begin{equation}\begin{cases}
+		\beta_i 
+		eq 0 \Rightarrow \xi_i = 0 \\
+		\alpha_i 
+		eq 0 \Rightarrow 1 + \xi_i - y_i w^T \varphi(x_i) - y_i b = 0
+\end{cases}\end{equation}
+
+解之，得：
+\begin{equation}
+	\begin{aligned}
+		b^* &= \frac{1-y_iw^T\varphi(x_i)}{y_i} \
+		&= \frac{1-y_i\sum_{i=1}^N\alpha_i\alpha_j\kappa(x_i,x_j)}{y_i}
+	\end{aligned}
+\end{equation}
+
+关于b的求解，通常有两种做法。其一是随机选取，其二是在区间内均匀选取并分别求出多个b，最后遍历所有的b取均值作为最终的特解$b^{*}$，通常第二种做法更加科学，精确度更高，鲁棒性更高。
